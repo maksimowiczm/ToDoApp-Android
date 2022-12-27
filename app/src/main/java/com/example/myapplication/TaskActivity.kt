@@ -16,6 +16,8 @@ class TaskActivity : AppCompatActivity() {
     private var title: String = ""
     private var desc: String = ""
 
+    private lateinit var task: Task
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_task)
@@ -27,7 +29,7 @@ class TaskActivity : AppCompatActivity() {
             id = intent.getIntExtra(TasksListActivity.TASK, -1)
             if (id != -1) {
                 val repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
-                val task = repo.getTask(id)
+                task = repo.getTask(id)
 
                 runOnUiThread {
                     editTitle.setText(task.title)
@@ -57,17 +59,20 @@ class TaskActivity : AppCompatActivity() {
         if (!edited)
             return
 
-//        val container = TaskContainer.getInstance()
-
-        val newTitle: String? = if (title == "") null else title
-
         thread {
+            val newTitle: String? = if (title == "") null else title
             val repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
 
-            if (id == -1)
+            // id == -1 = nowy task
+            if (id == -1) {
                 repo.addTask(Task(newTitle, desc))
-//        else
-//            container.editTask(Task(id, newTitle, desc))
+                return@thread
+            }
+
+            // edycja taska
+            task.title = newTitle
+            task.desc = desc
+            repo.updateTask(task)
         }
     }
 }
