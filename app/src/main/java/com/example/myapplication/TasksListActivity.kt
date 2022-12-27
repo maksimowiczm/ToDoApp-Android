@@ -26,13 +26,6 @@ class TasksListActivity : AppCompatActivity() {
 
     private lateinit var addButton: FloatingActionButton
 
-    override fun onResume() {
-        super.onResume()
-
-        adapter?.notifyDataSetChanged()
-    }
-
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tasks_list)
@@ -48,18 +41,23 @@ class TasksListActivity : AppCompatActivity() {
         }
 
         val repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
+        recyclerView.adapter = TaskAdapter()
 
         repo.getAll.observe(this) { tasks ->
-            if (adapter == null)
-                recyclerView.adapter = TaskAdapter(tasks)
-            else
-                adapter!!.notifyDataSetChanged()
+            adapter!!.submitList(tasks)
         }
     }
 
     // task_fragment.xml
-    inner class TaskAdapter(private val dataSet: List<Task>) :
+    inner class TaskAdapter :
         RecyclerView.Adapter<TaskAdapter.ViewHolder>() {
+        private val dataSet = mutableListOf<Task>()
+
+        fun submitList(newData: List<Task>) {
+            dataSet.clear()
+            dataSet.addAll(newData)
+            notifyDataSetChanged()
+        }
 
         inner class ViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
             val title: TextView = view.findViewById(R.id.title)
