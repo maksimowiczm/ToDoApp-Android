@@ -9,7 +9,7 @@ import androidx.room.Update
 
 @Dao
 interface TaskDao {
-    @Query("SELECT * FROM tasks")
+    @Query("SELECT * FROM tasks ORDER BY date DESC")
     fun getAll(): LiveData<List<Task>>
 
     @Query("SELECT * FROM tasks WHERE id=:id LIMIT 1")
@@ -21,6 +21,6 @@ interface TaskDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun addTask(task: Task)
 
-    @Query("select * from tasks where title like '%' || :title || '%'")
+    @Query("select * from tasks where title like '%' || :title || '%' ORDER BY date DESC")
     fun findTask(title: String): LiveData<List<Task>>
 }
