@@ -20,4 +20,7 @@ interface TaskDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun addTask(task: Task)
+
+    @Query("select * from tasks where title like '%' || :title || '%'")
+    fun findTask(title: String): LiveData<List<Task>>
 }

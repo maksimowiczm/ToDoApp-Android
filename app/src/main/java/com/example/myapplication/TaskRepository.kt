@@ -16,4 +16,8 @@ class TaskRepository(private val taskDao: TaskDao) {
     fun updateTask(task: Task) {
         taskDao.updateTask(task)
     }
+
+    fun findTasks(title: String): LiveData<List<Task>> {
+        return taskDao.findTask(title)
+    }
 }
