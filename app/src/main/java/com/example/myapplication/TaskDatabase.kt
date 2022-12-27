@@ -2,6 +2,7 @@ package com.example.myapplication
 
 import android.content.Context
 import androidx.room.*
+import com.example.myapplication.converters.Converters
 
 @Database(entities = [Task::class], version = 1, exportSchema = false)
 @TypeConverters(Converters::class)
