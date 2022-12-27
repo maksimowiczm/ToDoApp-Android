@@ -10,12 +10,13 @@ import kotlinx.serialization.Serializable
 @Serializable
 @Entity(tableName = "tasks")
 data class Task(
-    @PrimaryKey
-    val id: Int,
     val title: String? = null,
     val desc: String,
     val date: Instant = Clock.System.now()
 ) {
+    @PrimaryKey(autoGenerate = true)
+    var id: Int = 0
+
     fun getHeader(): String {
         if (title != null)
             return title

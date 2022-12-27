@@ -16,12 +16,8 @@ class MainActivity : AppCompatActivity() {
         val intent = Intent(this@MainActivity, TasksListActivity::class.java)
 
         thread {
-            val container = TaskContainer.getInstance()
-            if (container.apiRequests == 0)
-                container.addTasksFromApi()
-
             // hehe
-            Thread.sleep(250)
+            // Thread.sleep(250)
 
             runOnUiThread {
                 startActivity(intent)

@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.EditText
 import androidx.core.widget.addTextChangedListener
+import kotlin.concurrent.thread
 
 class TaskActivity : AppCompatActivity() {
     private lateinit var editTitle: EditText
@@ -22,23 +23,31 @@ class TaskActivity : AppCompatActivity() {
         editTitle = findViewById(R.id.task_title)
         editDesc = findViewById(R.id.task_desc)
 
-        id = intent.getIntExtra(TasksListActivity.TASK, -1)
-        if (id != -1) {
-            val task = TaskContainer.getInstance().getTask(id)
-            editTitle.setText(task.title)
-            editDesc.setText(task.desc)
+        thread {
+            id = intent.getIntExtra(TasksListActivity.TASK, -1)
+            if (id != -1) {
+                val repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
+                val task = repo.getTask(id)
 
-            title = task.title ?: ""
-            desc = task.desc
-        }
+                runOnUiThread {
+                    editTitle.setText(task.title)
+                    editDesc.setText(task.desc)
 
-        editTitle.addTextChangedListener {
-            edited = true
-            title = editTitle.text.toString()
-        }
-        editDesc.addTextChangedListener {
-            edited = true
-            desc = editDesc.text.toString()
+                    title = task.title ?: ""
+                    desc = task.desc
+                }
+            }
+
+            runOnUiThread {
+                editTitle.addTextChangedListener {
+                    edited = true
+                    title = editTitle.text.toString()
+                }
+                editDesc.addTextChangedListener {
+                    edited = true
+                    desc = editDesc.text.toString()
+                }
+            }
         }
     }
 
@@ -48,13 +57,17 @@ class TaskActivity : AppCompatActivity() {
         if (!edited)
             return
 
-        val container = TaskContainer.getInstance()
+//        val container = TaskContainer.getInstance()
 
         val newTitle: String? = if (title == "") null else title
 
-        if (id == -1)
-            container.addTask(Task(id, newTitle, desc))
-        else
-            container.editTask(Task(id, newTitle, desc))
+        thread {
+            val repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
+
+            if (id == -1)
+                repo.addTask(Task(newTitle, desc))
+//        else
+//            container.editTask(Task(id, newTitle, desc))
+        }
     }
 }

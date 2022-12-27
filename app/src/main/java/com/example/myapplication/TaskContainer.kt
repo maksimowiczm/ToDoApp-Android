@@ -26,10 +26,10 @@ class TaskContainer private constructor() {
     }
 
     fun addTask(task: Task) {
-        this.tasks.addFirst(Task(nextId++, task.title, task.desc, task.date))
+        this.tasks.addFirst(Task(task.title, task.desc, task.date))
     }
 
-    private fun addTasks(tasks: List<Task>) {
+    fun addTasks(tasks: List<Task>) {
         for (task in tasks)
             addTask(task)
     }
@@ -41,7 +41,7 @@ class TaskContainer private constructor() {
     fun editTask(task: Task) {
         val was = tasks.removeIf { t -> t.id == task.id }
         if (was)
-            addTask(Task(1, task.title, task.desc, task.date))
+            addTask(Task(task.title, task.desc, task.date))
     }
 
     fun addTasksFromApi() {

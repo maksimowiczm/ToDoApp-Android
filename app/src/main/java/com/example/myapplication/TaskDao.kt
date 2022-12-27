@@ -11,6 +11,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks")
     fun getAll(): LiveData<List<Task>>
 
+    @Query("SELECT * FROM tasks WHERE id=:id LIMIT 1")
+    fun getTask(id: Int): Task
+
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun addTask(task: Task)
 }

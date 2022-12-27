@@ -21,16 +21,17 @@ class TasksListActivity : AppCompatActivity() {
     }
 
     private lateinit var recyclerView: RecyclerView
+    private val adapter: TaskAdapter?
+        get() = recyclerView.adapter as TaskAdapter?
+
     private lateinit var addButton: FloatingActionButton
 
     override fun onResume() {
         super.onResume()
 
-        if(recyclerView.adapter == null)
-            recyclerView.adapter = TaskAdapter(TaskContainer.getInstance().getTasks())
-        else
-            recyclerView.adapter!!.notifyDataSetChanged()
+        adapter?.notifyDataSetChanged()
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +45,15 @@ class TasksListActivity : AppCompatActivity() {
             val intent = Intent(this@TasksListActivity, TaskActivity::class.java)
             intent.putExtra(NEW_TASK, true)
             startActivity(intent)
+        }
+
+        val repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
+
+        repo.getAll.observe(this) { tasks ->
+            if (adapter == null)
+                recyclerView.adapter = TaskAdapter(tasks)
+            else
+                adapter!!.notifyDataSetChanged()
         }
     }
 
