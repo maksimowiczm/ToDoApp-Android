@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Notatki</string>
+    <string name="add">Dodaj</string>
+
+    <string name="desc_hint">Zawartość</string>
+    <string name="title_hint">Tytuł</string>
+</resources>
