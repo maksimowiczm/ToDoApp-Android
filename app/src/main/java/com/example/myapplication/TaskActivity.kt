@@ -1,17 +1,20 @@
 package com.example.myapplication
 
-import android.content.res.ColorStateList
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.EditText
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.BlendModeColorFilterCompat
+import androidx.core.graphics.BlendModeCompat
 import androidx.core.widget.addTextChangedListener
-import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlin.concurrent.thread
 
 class TaskActivity : AppCompatActivity() {
     private lateinit var editTitle: EditText
     private lateinit var editDesc: EditText
-    private lateinit var saveButton: FloatingActionButton
+    private lateinit var saveButton: MenuItem
 
     private var edited: Boolean = false
 
@@ -23,14 +26,28 @@ class TaskActivity : AppCompatActivity() {
 
     private lateinit var task: Task
 
+    override fun onCreateOptionsMenu(menu: Menu): Boolean {
+        menuInflater.inflate(R.menu.task_menu, menu)
+        saveButton = menu.findItem(R.id.save_task)
+        saveButton.setOnMenuItemClickListener {
+            finish()
+            true
+        }
+
+        return true
+    }
+
     private fun setFloatingColor() {
         val color =
             if (title == defaultTitle && desc == defaultDesc)
-                ColorStateList.valueOf(resources.getColor(R.color.floating))
+                ContextCompat.getColor(this, R.color.white)
             else
-                ColorStateList.valueOf(resources.getColor(R.color.yellow))
+                ContextCompat.getColor(this, R.color.red)
 
-        saveButton.backgroundTintList = color
+        saveButton.icon.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+            color,
+            BlendModeCompat.SRC_ATOP
+        )
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,11 +56,6 @@ class TaskActivity : AppCompatActivity() {
 
         editTitle = findViewById(R.id.task_title)
         editDesc = findViewById(R.id.task_desc)
-        saveButton = findViewById(R.id.save_task)
-
-        saveButton.setOnClickListener {
-            finish()
-        }
 
         thread {
             id = intent.getIntExtra(TasksListActivity.TASK, -1)

@@ -5,6 +5,5 @@
         android:id="@+id/save_task"
         android:icon="@drawable/ic_save"
         android:title="@string/save"
-        app:actionViewClass="android.widget.SearchView"
         app:showAsAction="always"/>
 </menu>

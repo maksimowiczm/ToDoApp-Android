@@ -11,4 +11,5 @@
     <color name="darkGray">#282828</color>
     <color name="yellow">#ffff00</color>
     <color name="floating">#05f7cf</color>
+    <color name="red">#ff0000</color>
 </resources>
