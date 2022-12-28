@@ -5,11 +5,9 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
-import android.view.LayoutInflater
-import android.view.Menu
-import android.view.View
-import android.view.ViewGroup
+import android.view.*
+import android.widget.CheckBox
+import android.widget.LinearLayout
 import android.widget.SearchView
 import android.widget.SearchView.OnQueryTextListener
 import android.widget.TextView
@@ -36,14 +34,11 @@ class TasksListActivity : AppCompatActivity() {
     private lateinit var addButton: FloatingActionButton
 
     override fun onSaveInstanceState(outState: Bundle) {
-        Log.d("rot", "onSaveInstanceState")
         outState.putString(SEARCH_QUERY, searchQuery)
-
         super.onSaveInstanceState(outState)
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
-        Log.d("rot", "onCreateOptionsMenu")
         menuInflater.inflate(R.menu.main_menu, menu)
 
         val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
@@ -113,6 +108,8 @@ class TasksListActivity : AppCompatActivity() {
     inner class TaskAdapter :
         RecyclerView.Adapter<TaskAdapter.ViewHolder>() {
         private val dataSet = mutableListOf<Task>()
+        private var editing = false
+        private var count = 0
 
         fun submitList(newData: List<Task>) {
             dataSet.clear()
@@ -124,11 +121,62 @@ class TasksListActivity : AppCompatActivity() {
             val title: TextView = view.findViewById(R.id.title)
             val date: TextView = view.findViewById(R.id.date)
 
-            fun setOnClick(task: Task) {
+            var layout: LinearLayout = view.findViewById(R.id.linearLayout)
+            var checkBox: CheckBox? = null
+
+            private fun addCheckBox() {
+                if (checkBox != null)
+                    return
+
+                checkBox = CheckBox(this@TasksListActivity)
+                view.setOnClickListener {
+                    checkBox!!.isChecked = !checkBox!!.isChecked
+                }
+                checkBox!!.setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked)
+                        count++
+                    else
+                        count--
+
+                    if (count == 0) {
+                        editing = false
+                        notifyDataSetChanged()
+                    }
+                }
+
+                layout.addView(checkBox)
+            }
+
+            private fun removeCheckBox() {
+                if (checkBox == null)
+                    return
+
+                layout.removeView(checkBox)
+                checkBox = null
+            }
+
+            private fun firstCheckBox() {
+                addCheckBox()
+                checkBox!!.isChecked = true
+            }
+
+            fun setEvents(task: Task) {
+                if (editing) {
+                    addCheckBox()
+                    return
+                }
+
+                removeCheckBox()
                 view.setOnClickListener {
                     val intent = Intent(this@TasksListActivity, TaskActivity::class.java)
                     intent.putExtra(TASK, task.id)
                     startActivity(intent)
+                }
+                view.setOnLongClickListener {
+                    editing = true
+                    firstCheckBox()
+                    notifyDataSetChanged()
+                    true
                 }
             }
         }
@@ -151,7 +199,7 @@ class TasksListActivity : AppCompatActivity() {
             viewHolder.date.text =
                 task.date.toLocalDateTime(TimeZone.UTC).toJavaLocalDateTime().format(formatter)
 
-            viewHolder.setOnClick(dataSet[position])
+            viewHolder.setEvents(dataSet[position])
         }
 
         override fun getItemCount() = dataSet.size
