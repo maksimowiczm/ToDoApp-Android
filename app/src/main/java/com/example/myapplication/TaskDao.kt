@@ -2,6 +2,7 @@ package com.example.myapplication
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -23,4 +24,7 @@ interface TaskDao {
 
     @Query("select * from tasks where title like '%' || :title || '%' ORDER BY date DESC")
     fun findTask(title: String): LiveData<List<Task>>
+
+    @Delete
+    fun deleteTask(task: Task)
 }

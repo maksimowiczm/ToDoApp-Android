@@ -3,7 +3,6 @@ package com.example.myapplication
 import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.*
 import android.widget.CheckBox
@@ -11,12 +10,14 @@ import android.widget.LinearLayout
 import android.widget.SearchView
 import android.widget.SearchView.OnQueryTextListener
 import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.concurrent.thread
 
 class TasksListActivity : AppCompatActivity() {
     companion object {
@@ -34,6 +35,7 @@ class TasksListActivity : AppCompatActivity() {
 
     private var editing = false
     private lateinit var floatingButton: FloatingActionButton
+    private var tasksToDelete = ArrayList<Task>()
 
     private fun setFloatingClick() {
         floatingButton.setOnClickListener {
@@ -42,6 +44,18 @@ class TasksListActivity : AppCompatActivity() {
                 intent.putExtra(NEW_TASK, true)
                 startActivity(intent)
                 return@setOnClickListener
+            }
+
+            thread {
+                for (task in tasksToDelete) {
+                    repo.deleteTask(task)
+                }
+
+                runOnUiThread {
+                    editing = false
+                    floatingButton.setImageResource(R.drawable.ic_add)
+                    adapter!!.notifyDataSetChanged()
+                }
             }
         }
     }
@@ -130,7 +144,7 @@ class TasksListActivity : AppCompatActivity() {
             var layout: LinearLayout = view.findViewById(R.id.linearLayout)
             var checkBox: CheckBox? = null
 
-            private fun addCheckBox() {
+            private fun addCheckBox(task: Task) {
                 if (checkBox != null)
                     return
 
@@ -139,14 +153,16 @@ class TasksListActivity : AppCompatActivity() {
                     checkBox!!.isChecked = !checkBox!!.isChecked
                 }
                 checkBox!!.setOnCheckedChangeListener { _, isChecked ->
-                    if (isChecked)
+                    if (isChecked) {
                         count++
-                    else
+                        tasksToDelete.add(task)
+                    } else {
                         count--
+                        tasksToDelete.remove(task)
+                    }
 
                     if (count == 0) {
                         editing = false
-                        floatingButton.setImageResource(R.drawable.ic_add)
                         notifyDataSetChanged()
                     }
                 }
@@ -162,14 +178,14 @@ class TasksListActivity : AppCompatActivity() {
                 checkBox = null
             }
 
-            private fun firstCheckBox() {
-                addCheckBox()
+            private fun firstCheckBox(task: Task) {
+                addCheckBox(task)
                 checkBox!!.isChecked = true
             }
 
             fun setEvents(task: Task) {
                 if (editing) {
-                    addCheckBox()
+                    addCheckBox(task)
                     return
                 }
 
@@ -181,7 +197,7 @@ class TasksListActivity : AppCompatActivity() {
                 }
                 view.setOnLongClickListener {
                     editing = true
-                    firstCheckBox()
+                    firstCheckBox(task)
                     floatingButton.setImageResource(R.drawable.ic_delete)
                     notifyDataSetChanged()
                     true

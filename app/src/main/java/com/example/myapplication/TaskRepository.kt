@@ -20,4 +20,8 @@ class TaskRepository(private val taskDao: TaskDao) {
     fun findTasks(title: String): LiveData<List<Task>> {
         return taskDao.findTask(title)
     }
+
+    fun deleteTask(task: Task) {
+        taskDao.deleteTask(task)
+    }
 }
