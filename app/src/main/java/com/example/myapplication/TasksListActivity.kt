@@ -25,13 +25,26 @@ class TasksListActivity : AppCompatActivity() {
         const val SEARCH_QUERY: String = "searchQuery"
     }
 
+    lateinit var repo: TaskRepository
     private var searchQuery: String? = null
 
     private lateinit var recyclerView: RecyclerView
     private val adapter: TaskAdapter?
         get() = recyclerView.adapter as TaskAdapter?
 
-    private lateinit var addButton: FloatingActionButton
+    private var editing = false
+    private lateinit var floatingButton: FloatingActionButton
+
+    private fun setFloatingClick() {
+        floatingButton.setOnClickListener {
+            if (!editing) {
+                val intent = Intent(this@TasksListActivity, TaskActivity::class.java)
+                intent.putExtra(NEW_TASK, true)
+                startActivity(intent)
+                return@setOnClickListener
+            }
+        }
+    }
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(SEARCH_QUERY, searchQuery)
@@ -54,7 +67,6 @@ class TasksListActivity : AppCompatActivity() {
             searchView.isFocusable = true
         }
 
-        val repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
         val tasks = if (searchQuery != null) repo.findTasks(searchQuery!!) else repo.getAll
         tasks.observe(this@TasksListActivity) { tasks ->
             adapter!!.submitList(tasks)
@@ -68,7 +80,7 @@ class TasksListActivity : AppCompatActivity() {
 
             override fun onQueryTextChange(newText: String): Boolean {
                 searchQuery = newText
-                val tasks = repo.findTasks(searchQuery!!)
+                val tasks = if (searchQuery == "") repo.getAll else repo.findTasks(searchQuery!!)
                 tasks.observe(this@TasksListActivity) { tasks ->
                     adapter!!.submitList(tasks)
                 }
@@ -88,15 +100,10 @@ class TasksListActivity : AppCompatActivity() {
             searchQuery = savedInstanceState.getString(SEARCH_QUERY)
 
         recyclerView = findViewById(R.id.recycler_view)
-        addButton = findViewById(R.id.add_task)
+        floatingButton = findViewById(R.id.add_task)
 
-        addButton.setOnClickListener {
-            val intent = Intent(this@TasksListActivity, TaskActivity::class.java)
-            intent.putExtra(NEW_TASK, true)
-            startActivity(intent)
-        }
-
-        val repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
+        setFloatingClick()
+        repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
         recyclerView.adapter = TaskAdapter()
 
         repo.getAll.observe(this) { tasks ->
@@ -108,7 +115,6 @@ class TasksListActivity : AppCompatActivity() {
     inner class TaskAdapter :
         RecyclerView.Adapter<TaskAdapter.ViewHolder>() {
         private val dataSet = mutableListOf<Task>()
-        private var editing = false
         private var count = 0
 
         fun submitList(newData: List<Task>) {
@@ -140,6 +146,7 @@ class TasksListActivity : AppCompatActivity() {
 
                     if (count == 0) {
                         editing = false
+                        floatingButton.setImageResource(R.drawable.ic_add)
                         notifyDataSetChanged()
                     }
                 }
@@ -175,6 +182,7 @@ class TasksListActivity : AppCompatActivity() {
                 view.setOnLongClickListener {
                     editing = true
                     firstCheckBox()
+                    floatingButton.setImageResource(R.drawable.ic_delete)
                     notifyDataSetChanged()
                     true
                 }
