@@ -118,7 +118,15 @@ class TaskRestRepo private constructor() : ITaskRepository {
     }
 
     override fun findTasks(query: String): LiveData<List<Task>> {
-        TODO("Not yet implemented")
+        val queryTasks = ArrayDeque<Task>()
+        for (task in tasks) {
+            if (task.desc.contains(query))
+                queryTasks.add(task)
+            else if (task.title != null && task.title!!.contains(query))
+                queryTasks.add(task)
+        }
+
+        return MutableLiveData(queryTasks)
     }
 
     override fun deleteTask(task: Task) {
