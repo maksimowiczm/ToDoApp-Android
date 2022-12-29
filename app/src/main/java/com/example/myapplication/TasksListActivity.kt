@@ -90,7 +90,7 @@ class TasksListActivity : AppCompatActivity() {
         if (searchQuery == null)
             return
 
-        val tasks = if (searchQuery == "") repo.getAll else repo.findTasks(searchQuery!!)
+        val tasks = if (searchQuery == "") repo.getAll() else repo.findTasks(searchQuery!!)
         tasks.observe(this@TasksListActivity) { tasks ->
             adapter!!.submitList(tasks)
         }
@@ -117,7 +117,7 @@ class TasksListActivity : AppCompatActivity() {
             searchView.isFocusable = true
         }
 
-        val tasks = if (searchQuery != null) repo.findTasks(searchQuery!!) else repo.getAll
+        val tasks = if (searchQuery != null) repo.findTasks(searchQuery!!) else repo.getAll()
         tasks.observe(this@TasksListActivity) { tasks ->
             adapter!!.submitList(tasks)
         }
@@ -163,7 +163,7 @@ class TasksListActivity : AppCompatActivity() {
         setFloatingButton()
         recyclerView.adapter = TaskAdapter()
 
-        repo.getAll.observe(this) { tasks ->
+        repo.getAll().observe(this) { tasks ->
             adapter!!.submitList(tasks)
         }
     }

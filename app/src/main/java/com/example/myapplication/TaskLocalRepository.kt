@@ -2,26 +2,28 @@ package com.example.myapplication
 
 import androidx.lifecycle.LiveData
 
-class TaskLocalRepository(private val taskDao: TaskDao) {
-    val getAll: LiveData<List<Task>> = taskDao.getAll()
+class TaskLocalRepository(private val taskDao: TaskDao) : ITaskRepository {
+    override fun getAll(): LiveData<List<Task>> {
+        return taskDao.getAll()
+    }
 
-    fun addTask(task: Task) {
+    override fun addTask(task: Task) {
         taskDao.addTask(task)
     }
 
-    fun getTask(id: Int): Task {
+    override fun getTask(id: Int): Task {
         return taskDao.getTask(id)
     }
 
-    fun updateTask(task: Task) {
+    override fun updateTask(task: Task) {
         taskDao.updateTask(task)
     }
 
-    fun findTasks(title: String): LiveData<List<Task>> {
+    override fun findTasks(title: String): LiveData<List<Task>> {
         return taskDao.findTask(title)
     }
 
-    fun deleteTask(task: Task) {
+    override fun deleteTask(task: Task) {
         taskDao.deleteTask(task)
     }
 }
