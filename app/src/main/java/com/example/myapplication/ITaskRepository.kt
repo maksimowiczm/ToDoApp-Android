@@ -7,6 +7,6 @@ interface ITaskRepository {
     fun addTask(task: Task)
     fun getTask(id: Int): Task
     fun updateTask(task: Task)
-    fun findTasks(title: String): LiveData<List<Task>>
+    fun findTasks(query: String): LiveData<List<Task>>
     fun deleteTask(task: Task)
 }

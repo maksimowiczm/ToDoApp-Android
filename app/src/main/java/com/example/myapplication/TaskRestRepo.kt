@@ -2,8 +2,11 @@ package com.example.myapplication
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.github.kittinunf.fuel.core.extensions.jsonBody
 import com.github.kittinunf.fuel.httpGet
+import com.github.kittinunf.fuel.httpPost
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 
@@ -16,7 +19,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
         }
     }
 
-    private var tasks = ArrayList<Task>()
+    private var tasks = ArrayDeque<Task>()
     private var liveTasks = MutableLiveData<List<Task>>(tasks)
 
     fun loadFromApi() {
@@ -36,13 +39,13 @@ class TaskRestRepo private constructor() : ITaskRepository {
         val tasks: MutableList<Task> = try {
             Json.decodeFromString(tasksJson)
         } catch (e: IllegalArgumentException) {
-            (ArrayDeque())
+            ArrayDeque()
         } catch (e: Exception) {
             throw e
         }
 
         tasks.sortByDescending { t -> t.date }
-        tasks.forEach { t -> addTask(t) }
+        tasks.forEach { t -> localAddTask(t) }
         liveTasks.postValue(tasks)
     }
 
@@ -50,8 +53,33 @@ class TaskRestRepo private constructor() : ITaskRepository {
         return liveTasks
     }
 
+    private fun localAddTask(task: Task) {
+        tasks.addFirst(task)
+    }
+
     override fun addTask(task: Task) {
-        tasks.add(task)
+        val (_, response, result) =
+            "http://192.168.2.43:3000/tasks"
+                .httpPost()
+                .jsonBody(Json.encodeToString(task))
+                .timeout(3000)
+                .response()
+
+        val (_, error) = result
+
+        if (error != null)
+            throw Exception("lol")
+
+        val tasksJson = String(response.data)
+
+        val task: Task = try {
+            Json.decodeFromString(tasksJson)
+        } catch (e: Exception) {
+            throw e
+        }
+
+        localAddTask(task)
+        liveTasks.postValue(tasks)
     }
 
     override fun getTask(id: Int): Task {
@@ -62,7 +90,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
         TODO("Not yet implemented")
     }
 
-    override fun findTasks(title: String): LiveData<List<Task>> {
+    override fun findTasks(query: String): LiveData<List<Task>> {
         TODO("Not yet implemented")
     }
 

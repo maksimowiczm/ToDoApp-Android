@@ -19,8 +19,8 @@ class TaskLocalRepository(private val taskDao: TaskDao) : ITaskRepository {
         taskDao.updateTask(task)
     }
 
-    override fun findTasks(title: String): LiveData<List<Task>> {
-        return taskDao.findTask(title)
+    override fun findTasks(query: String): LiveData<List<Task>> {
+        return taskDao.findTask(query)
     }
 
     override fun deleteTask(task: Task) {
