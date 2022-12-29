@@ -18,6 +18,8 @@ class TaskActivity : AppCompatActivity() {
     private lateinit var saveButton: MenuItem
 
     private var edited: Boolean = false
+    private var rest: Boolean? = null
+    lateinit var repo: ITaskRepository
 
     private var defaultTitle: String = ""
     private var defaultDesc: String = ""
@@ -58,10 +60,16 @@ class TaskActivity : AppCompatActivity() {
         editTitle = findViewById(R.id.task_title)
         editDesc = findViewById(R.id.task_desc)
 
+        rest = intent.getBooleanExtra(TasksListActivity.REST, false)
+        repo = if (rest!!) {
+            TaskRestRepo.getInstance()
+        } else {
+            TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
+        }
+
         thread {
             id = intent.getIntExtra(TasksListActivity.TASK, -1)
             if (id != -1) {
-                val repo = TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
                 task = repo.getTask(id)
 
                 runOnUiThread {
@@ -93,7 +101,6 @@ class TaskActivity : AppCompatActivity() {
     private fun saveTask() {
         thread {
             val newTitle: String? = if (title == "") null else title
-            val repo = TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
 
             // id == -1 = nowy task
             if (id == -1) {

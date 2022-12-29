@@ -25,9 +25,13 @@ class TasksListActivity : AppCompatActivity() {
         const val SEARCH_QUERY = "searchQuery"
         const val EDITING = "editing"
         const val TASKS_TO_DELETE = "tasksToDelete"
+        const val REST = "restAPI"
+        const val REST_AVAILABLE = "restAvailable"
     }
 
-    lateinit var repo: TaskLocalRepository
+    private var rest: Boolean = true
+    private var restAvailable: Boolean = false
+    lateinit var repo: ITaskRepository
     private var searchQuery: String? = null
 
     private lateinit var recyclerView: RecyclerView
@@ -38,6 +42,15 @@ class TasksListActivity : AppCompatActivity() {
     private lateinit var floatingButton: FloatingActionButton
     private var tasksToDelete = ArrayList<Task>()
     private var tasksToDeleteIds = ArrayList<Int>()
+
+    private fun launchTaskActivity(new: Boolean, id: Int?) {
+        val intent = Intent(this@TasksListActivity, TaskActivity::class.java)
+        intent.putExtra(NEW_TASK, new)
+        if (id != null)
+            intent.putExtra(TASK, id)
+        intent.putExtra(REST, rest)
+        startActivity(intent)
+    }
 
     private fun setFloatingButton() {
         val color = if (editing) {
@@ -55,9 +68,7 @@ class TasksListActivity : AppCompatActivity() {
 
         floatingButton.setOnClickListener {
             if (!editing) {
-                val intent = Intent(this@TasksListActivity, TaskActivity::class.java)
-                intent.putExtra(NEW_TASK, true)
-                startActivity(intent)
+                launchTaskActivity(true, null)
                 return@setOnClickListener
             }
 
@@ -142,7 +153,14 @@ class TasksListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tasks_list)
-        repo = TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
+
+        restAvailable = intent.getBooleanExtra(TasksListActivity.REST_AVAILABLE, false)
+
+        repo = if (rest) {
+            TaskRestRepo.getInstance()
+        } else {
+            TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
+        }
 
         if (savedInstanceState != null) {
             searchQuery = savedInstanceState.getString(SEARCH_QUERY)
@@ -237,9 +255,7 @@ class TasksListActivity : AppCompatActivity() {
 
                 removeCheckBox()
                 view.setOnClickListener {
-                    val intent = Intent(this@TasksListActivity, TaskActivity::class.java)
-                    intent.putExtra(TASK, task.id)
-                    startActivity(intent)
+                    launchTaskActivity(false, task.id)
                 }
                 view.setOnLongClickListener {
                     editing = true

@@ -18,6 +18,14 @@ class MainActivity : AppCompatActivity() {
         thread {
             // hehe
             // Thread.sleep(250)
+            val restAvailable = try {
+                TaskRestRepo.getInstance().loadFromApi()
+                true
+            } catch (e: Exception) {
+                false
+            }
+
+            intent.putExtra(TasksListActivity.REST_AVAILABLE, restAvailable)
 
             runOnUiThread {
                 startActivity(intent)
