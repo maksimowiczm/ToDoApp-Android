@@ -2,10 +2,8 @@ package com.example.myapplication
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.github.kittinunf.fuel.*
 import com.github.kittinunf.fuel.core.extensions.jsonBody
-import com.github.kittinunf.fuel.httpGet
-import com.github.kittinunf.fuel.httpPatch
-import com.github.kittinunf.fuel.httpPost
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -20,53 +18,65 @@ class TaskRestRepo private constructor() : ITaskRepository {
         }
     }
 
-    private var tasks = ArrayDeque<Task>()
-    private var liveTasks = MutableLiveData<List<Task>>(tasks)
-
-    fun loadFromApi() {
-        val (_, response, result) =
-            "http://192.168.2.43:3000/tasks"
-                .httpGet()
-                .timeout(3000)
-                .response()
-
-        val (_, error) = result
-
-        if (error != null)
-            throw Exception("lol")
-
-        val tasksJson = String(response.data)
-
-        val tasks: MutableList<Task> = try {
-            Json.decodeFromString(tasksJson)
-        } catch (e: IllegalArgumentException) {
-            ArrayDeque()
-        } catch (e: Exception) {
-            throw e
-        }
-
-        tasks.sortByDescending { t -> t.date }
-        tasks.forEach { t -> localAddTask(t) }
-        liveTasks.postValue(tasks)
+    private fun notifyObserver() {
+        getTasksApi()
     }
 
     override fun getAll(): LiveData<List<Task>> {
-        return liveTasks
-    }
-
-    private fun localAddTask(task: Task) {
-        tasks.addFirst(task)
-    }
-
-    private fun localDeleteTask(task: Task) {
-        tasks.remove(task)
+        return getTasksApi()
     }
 
     override fun addTask(task: Task) {
+        addTaskApi(task)
+    }
+
+    override fun getTask(id: Int): Task {
+        return getTaskApi(id)
+    }
+
+    override fun updateTask(task: Task) {
+        updateTaskApi(task)
+    }
+
+    override fun findTasks(query: String): LiveData<List<Task>> {
+        return findTasksApi(query)
+    }
+
+    override fun deleteTask(task: Task) {
+        deleteTaskApi(task.id)
+    }
+
+
+    private val liveTasks = MutableLiveData<List<Task>>()
+
+    private fun getTasksApi(): LiveData<List<Task>> {
+        Fuel.get("http://192.168.2.43:3000/tasks")
+            .timeout(3000)
+            .response { _, response, result ->
+                val (_, error) = result
+
+                if (error != null)
+                    throw Exception("lol")
+
+                val tasksJson = String(response.data)
+
+                val tasks: ArrayList<Task> = try {
+                    Json.decodeFromString(tasksJson)
+                } catch (e: Exception) {
+                    throw e
+                }
+
+                tasks.sortByDescending { it.date }
+                liveTasks.postValue(tasks)
+            }
+
+        return liveTasks
+    }
+
+    private fun getTaskApi(id: Int): Task {
         val (_, response, result) =
-            "http://192.168.2.43:3000/tasks"
-                .httpPost()
-                .jsonBody(Json.encodeToString(task))
+            ("http://192.168.2.43:3000/tasks/$id")
+                .httpGet()
                 .timeout(3000)
                 .response()
 
@@ -83,16 +93,27 @@ class TaskRestRepo private constructor() : ITaskRepository {
             throw e
         }
 
-        localAddTask(task)
-        liveTasks.postValue(tasks)
+        return task
     }
 
-    override fun getTask(id: Int): Task {
-        return tasks.find { t -> t.id == id }!!
+    private fun addTaskApi(task: Task) {
+        val (_, _, result) =
+            "http://192.168.2.43:3000/tasks"
+                .httpPost()
+                .jsonBody(Json.encodeToString(task))
+                .timeout(3000)
+                .response()
+
+        val (_, error) = result
+
+        if (error != null)
+            throw Exception("lol")
+
+        notifyObserver()
     }
 
-    override fun updateTask(task: Task) {
-        val (_, response, result) =
+    private fun updateTaskApi(task: Task) {
+        val (_, _, result) =
             ("http://192.168.2.43:3000/tasks/" + task.id)
                 .httpPatch()
                 .jsonBody(Json.encodeToString(task))
@@ -104,32 +125,35 @@ class TaskRestRepo private constructor() : ITaskRepository {
         if (error != null)
             throw Exception("lol")
 
-        val tasksJson = String(response.data)
-
-        val newTask: Task = try {
-            Json.decodeFromString(tasksJson)
-        } catch (e: Exception) {
-            throw e
-        }
-
-        localDeleteTask(task)
-        localAddTask(newTask)
-        liveTasks.postValue(tasks)
+        notifyObserver()
     }
 
-    override fun findTasks(query: String): LiveData<List<Task>> {
-        val queryTasks = ArrayDeque<Task>()
-        for (task in tasks) {
-            if (task.desc.contains(query))
-                queryTasks.add(task)
-            else if (task.title != null && task.title!!.contains(query))
+    private fun deleteTaskApi(id: Int) {
+        val (_, _, result) =
+            ("http://192.168.2.43:3000/tasks/$id")
+                .httpDelete()
+                .timeout(3000)
+                .response()
+
+        val (_, error) = result
+
+        if (error != null)
+            throw Exception("lol")
+
+        notifyObserver()
+    }
+
+    private val queryList = MutableLiveData<List<Task>>()
+    private fun findTasksApi(query: String): LiveData<List<Task>> {
+        val tasks = liveTasks.value!!
+
+        val queryTasks = ArrayList<Task>()
+        for (task in tasks.iterator()) {
+            if (task.desc.contains(query) || (task.title != null && task.title!!.contains(query)))
                 queryTasks.add(task)
         }
 
-        return MutableLiveData(queryTasks)
-    }
-
-    override fun deleteTask(task: Task) {
-        TODO("Not yet implemented")
+        queryList.postValue(queryTasks)
+        return queryList
     }
 }

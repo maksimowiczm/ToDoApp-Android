@@ -10,6 +10,7 @@ import android.widget.*
 import android.widget.SearchView.OnQueryTextListener
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.datetime.TimeZone
@@ -29,7 +30,7 @@ class TasksListActivity : AppCompatActivity() {
         const val REST_AVAILABLE = "restAvailable"
     }
 
-    private var rest: Boolean = true
+    private var rest: Boolean = false
     private var restAvailable: Boolean = false
     lateinit var repo: ITaskRepository
     private var searchQuery: String? = null
@@ -42,6 +43,7 @@ class TasksListActivity : AppCompatActivity() {
     private lateinit var floatingButton: FloatingActionButton
     private var tasksToDelete = ArrayList<Task>()
     private var tasksToDeleteIds = ArrayList<Int>()
+    private lateinit var tasks: LiveData<List<Task>>
 
     private fun launchTaskActivity(new: Boolean, id: Int?) {
         val intent = Intent(this@TasksListActivity, TaskActivity::class.java)
@@ -77,9 +79,11 @@ class TasksListActivity : AppCompatActivity() {
                     repo.deleteTask(task)
                 }
 
+                val count = tasksToDelete.size.toString()
+                tasksToDelete.clear()
+
                 runOnUiThread {
-                    val str = getString(R.string.task_deleted) + " " +
-                            tasksToDelete.size.toString() + " " +
+                    val str = getString(R.string.task_deleted) + " " + count + " " +
                             resources.getQuantityString(R.plurals.tasks_deleted, tasksToDelete.size)
 
                     Toast.makeText(application, str, Toast.LENGTH_SHORT).show()
@@ -129,11 +133,6 @@ class TasksListActivity : AppCompatActivity() {
             searchView.isFocusable = true
         }
 
-        val tasks = if (searchQuery != null) repo.findTasks(searchQuery!!) else repo.getAll()
-        tasks.observe(this@TasksListActivity) { tasks ->
-            adapter!!.submitList(tasks)
-        }
-
         searchView.setOnQueryTextListener(object : OnQueryTextListener {
 
             override fun onQueryTextSubmit(query: String?): Boolean {
@@ -154,7 +153,7 @@ class TasksListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tasks_list)
 
-        restAvailable = intent.getBooleanExtra(TasksListActivity.REST_AVAILABLE, false)
+        restAvailable = intent.getBooleanExtra(REST_AVAILABLE, false)
 
         repo = if (rest) {
             TaskRestRepo.getInstance()
@@ -175,7 +174,11 @@ class TasksListActivity : AppCompatActivity() {
         setFloatingButton()
         recyclerView.adapter = TaskAdapter()
 
-        repo.getAll().observe(this) { tasks ->
+        if (searchQuery != null && searchQuery != "")
+            updateQuery()
+
+        tasks = repo.getAll()
+        tasks.observe(this) { tasks ->
             for (task in tasks)
                 if (tasksToDeleteIds.contains(task.id))
                     tasksToDelete.add(task)
@@ -289,5 +292,10 @@ class TasksListActivity : AppCompatActivity() {
         }
 
         override fun getItemCount() = dataSet.size
+    }
+
+    override fun onPause() {
+//        repo.getAll().removeObservers(this)
+        super.onPause()
     }
 }
