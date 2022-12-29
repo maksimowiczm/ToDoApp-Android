@@ -37,6 +37,7 @@ class TasksListActivity : AppCompatActivity() {
     private var editing = false
     private lateinit var floatingButton: FloatingActionButton
     private var tasksToDelete = ArrayList<Task>()
+    private var tasksToDeleteIds = ArrayList<Int>()
 
     private fun setFloatingButton() {
         val color = if (editing) {
@@ -146,15 +147,8 @@ class TasksListActivity : AppCompatActivity() {
         if (savedInstanceState != null) {
             searchQuery = savedInstanceState.getString(SEARCH_QUERY)
             editing = savedInstanceState.getBoolean(EDITING)
-            val tasksIds = savedInstanceState.getIntegerArrayList(TASKS_TO_DELETE) as ArrayList<Int>
-            thread {
-                for (id in tasksIds)
-                    tasksToDelete.add(repo.getTask(id))
-
-                runOnUiThread {
-                    adapter!!.notifyDataSetChanged()
-                }
-            }
+            tasksToDeleteIds =
+                savedInstanceState.getIntegerArrayList(TASKS_TO_DELETE) as ArrayList<Int>
         }
 
         recyclerView = findViewById(R.id.recycler_view)
@@ -164,6 +158,10 @@ class TasksListActivity : AppCompatActivity() {
         recyclerView.adapter = TaskAdapter()
 
         repo.getAll().observe(this) { tasks ->
+            for (task in tasks)
+                if (tasksToDeleteIds.contains(task.id))
+                    tasksToDelete.add(task)
+
             adapter!!.submitList(tasks)
         }
     }
