@@ -4,6 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.github.kittinunf.fuel.core.extensions.jsonBody
 import com.github.kittinunf.fuel.httpGet
+import com.github.kittinunf.fuel.httpPatch
 import com.github.kittinunf.fuel.httpPost
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -57,6 +58,10 @@ class TaskRestRepo private constructor() : ITaskRepository {
         tasks.addFirst(task)
     }
 
+    private fun localDeleteTask(task: Task) {
+        tasks.remove(task)
+    }
+
     override fun addTask(task: Task) {
         val (_, response, result) =
             "http://192.168.2.43:3000/tasks"
@@ -87,7 +92,29 @@ class TaskRestRepo private constructor() : ITaskRepository {
     }
 
     override fun updateTask(task: Task) {
-        TODO("Not yet implemented")
+        val (_, response, result) =
+            ("http://192.168.2.43:3000/tasks/" + task.id)
+                .httpPatch()
+                .jsonBody(Json.encodeToString(task))
+                .timeout(3000)
+                .response()
+
+        val (_, error) = result
+
+        if (error != null)
+            throw Exception("lol")
+
+        val tasksJson = String(response.data)
+
+        val newTask: Task = try {
+            Json.decodeFromString(tasksJson)
+        } catch (e: Exception) {
+            throw e
+        }
+
+        localDeleteTask(task)
+        localAddTask(newTask)
+        liveTasks.postValue(tasks)
     }
 
     override fun findTasks(query: String): LiveData<List<Task>> {
