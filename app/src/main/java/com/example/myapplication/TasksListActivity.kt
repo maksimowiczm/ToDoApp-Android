@@ -3,6 +3,7 @@ package com.example.myapplication
 import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
+import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.*
 import android.widget.CheckBox
@@ -11,6 +12,7 @@ import android.widget.SearchView
 import android.widget.SearchView.OnQueryTextListener
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.datetime.TimeZone
@@ -21,9 +23,11 @@ import kotlin.concurrent.thread
 
 class TasksListActivity : AppCompatActivity() {
     companion object {
-        const val TASK: String = "task"
-        const val NEW_TASK: String = "newTask"
-        const val SEARCH_QUERY: String = "searchQuery"
+        const val TASK = "task"
+        const val NEW_TASK = "newTask"
+        const val SEARCH_QUERY = "searchQuery"
+        const val EDITING = "editing"
+        const val TASKS_TO_DELETE = "tasksToDelete"
     }
 
     lateinit var repo: TaskRepository
@@ -37,7 +41,20 @@ class TasksListActivity : AppCompatActivity() {
     private lateinit var floatingButton: FloatingActionButton
     private var tasksToDelete = ArrayList<Task>()
 
-    private fun setFloatingClick() {
+    private fun setFloatingButton() {
+        val color = if (editing) {
+            floatingButton.setImageResource(R.drawable.ic_delete)
+            ContextCompat.getColor(this, R.color.yellow)
+        } else {
+            floatingButton.setImageResource(R.drawable.ic_add)
+            ContextCompat.getColor(this, R.color.floating)
+        }
+
+        floatingButton.backgroundTintList = ColorStateList.valueOf(color)
+
+        if (floatingButton.hasOnClickListeners())
+            return
+
         floatingButton.setOnClickListener {
             if (!editing) {
                 val intent = Intent(this@TasksListActivity, TaskActivity::class.java)
@@ -53,7 +70,7 @@ class TasksListActivity : AppCompatActivity() {
 
                 runOnUiThread {
                     editing = false
-                    floatingButton.setImageResource(R.drawable.ic_add)
+                    setFloatingButton()
                     adapter!!.notifyDataSetChanged()
                 }
             }
@@ -62,6 +79,8 @@ class TasksListActivity : AppCompatActivity() {
 
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(SEARCH_QUERY, searchQuery)
+        outState.putBoolean(EDITING, editing)
+        outState.putIntegerArrayList(TASKS_TO_DELETE, ArrayList(tasksToDelete.map { t -> t.id }))
         super.onSaveInstanceState(outState)
     }
 
@@ -109,15 +128,26 @@ class TasksListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tasks_list)
+        repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
 
-        if (savedInstanceState != null)
+        if (savedInstanceState != null) {
             searchQuery = savedInstanceState.getString(SEARCH_QUERY)
+            editing = savedInstanceState.getBoolean(EDITING)
+            val tasksIds = savedInstanceState.getIntegerArrayList(TASKS_TO_DELETE) as ArrayList<Int>
+            thread {
+                for (id in tasksIds)
+                    tasksToDelete.add(repo.getTask(id))
+
+                runOnUiThread {
+                    adapter!!.notifyDataSetChanged()
+                }
+            }
+        }
 
         recyclerView = findViewById(R.id.recycler_view)
         floatingButton = findViewById(R.id.add_task)
 
-        setFloatingClick()
-        repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
+        setFloatingButton()
         recyclerView.adapter = TaskAdapter()
 
         repo.getAll.observe(this) { tasks ->
@@ -129,7 +159,6 @@ class TasksListActivity : AppCompatActivity() {
     inner class TaskAdapter :
         RecyclerView.Adapter<TaskAdapter.ViewHolder>() {
         private val dataSet = mutableListOf<Task>()
-        private var count = 0
 
         fun submitList(newData: List<Task>) {
             dataSet.clear()
@@ -149,20 +178,23 @@ class TasksListActivity : AppCompatActivity() {
                     return
 
                 checkBox = CheckBox(this@TasksListActivity)
+                if (tasksToDelete.contains(task))
+                    checkBox!!.isChecked = true
+
                 view.setOnClickListener {
                     checkBox!!.isChecked = !checkBox!!.isChecked
                 }
-                checkBox!!.setOnCheckedChangeListener { _, isChecked ->
-                    if (isChecked) {
-                        count++
-                        tasksToDelete.add(task)
-                    } else {
-                        count--
-                        tasksToDelete.remove(task)
-                    }
 
-                    if (count == 0) {
+                checkBox!!.setOnCheckedChangeListener { _, isChecked ->
+                    if (isChecked)
+                        tasksToDelete.add(task)
+                    else
+                        tasksToDelete.remove(task)
+
+
+                    if (tasksToDelete.size == 0) {
                         editing = false
+                        setFloatingButton()
                         notifyDataSetChanged()
                     }
                 }
@@ -198,7 +230,7 @@ class TasksListActivity : AppCompatActivity() {
                 view.setOnLongClickListener {
                     editing = true
                     firstCheckBox(task)
-                    floatingButton.setImageResource(R.drawable.ic_delete)
+                    setFloatingButton()
                     notifyDataSetChanged()
                     true
                 }
