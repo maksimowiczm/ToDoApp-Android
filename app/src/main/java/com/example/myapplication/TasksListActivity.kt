@@ -1,5 +1,6 @@
 package com.example.myapplication
 
+import android.app.Activity
 import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
@@ -8,9 +9,9 @@ import android.os.Bundle
 import android.view.*
 import android.widget.*
 import android.widget.SearchView.OnQueryTextListener
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LiveData
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.datetime.TimeZone
@@ -44,7 +45,40 @@ class TasksListActivity : AppCompatActivity() {
     private lateinit var cloudButton: FloatingActionButton
     private var tasksToDelete = ArrayList<Task>()
     private var tasksToDeleteIds = ArrayList<Int>()
-    private lateinit var tasks: LiveData<List<Task>>
+
+    private var resultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val data: Intent = result.data ?: return@registerForActivityResult
+
+                val edited = data.getBooleanExtra(TaskActivity.EDITED, false)
+                if (edited) {
+                    val id = data.getIntExtra(TaskActivity.ID, -1)
+                    var title = data.getStringExtra(TaskActivity.TITLE)
+                    val desc = data.getStringExtra(TaskActivity.DESC)
+                    if (title == "")
+                        title = null
+
+                    thread {
+                        val text =
+                            if (id == -1) {
+                                repo.addTask(Task(title, desc!!))
+                                getString(R.string.task_added)
+                            } else {
+                                val task = repo.getTask(id)
+                                task.title = title
+                                task.desc = desc!!
+                                repo.updateTask(task)
+                                getString(R.string.task_saved)
+                            }
+
+                        runOnUiThread {
+                            Toast.makeText(application, text, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+            }
+        }
 
     private fun launchTaskActivity(new: Boolean, id: Int?) {
         val intent = Intent(this@TasksListActivity, TaskActivity::class.java)
@@ -52,7 +86,7 @@ class TasksListActivity : AppCompatActivity() {
         if (id != null)
             intent.putExtra(TASK, id)
         intent.putExtra(REST, rest)
-        startActivity(intent)
+        resultLauncher.launch(intent)
     }
 
     private fun setFloatingButton() {
@@ -85,7 +119,10 @@ class TasksListActivity : AppCompatActivity() {
 
                 runOnUiThread {
                     val str = getString(R.string.task_deleted) + " " + count + " " +
-                            resources.getQuantityString(R.plurals.tasks_deleted, tasksToDelete.size)
+                            resources.getQuantityString(
+                                R.plurals.tasks_deleted,
+                                tasksToDelete.size
+                            )
 
                     Toast.makeText(application, str, Toast.LENGTH_SHORT).show()
                     editing = false
@@ -99,15 +136,18 @@ class TasksListActivity : AppCompatActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         outState.putString(SEARCH_QUERY, searchQuery)
         outState.putBoolean(EDITING, editing)
-        outState.putIntegerArrayList(TASKS_TO_DELETE, ArrayList(tasksToDelete.map { t -> t.id }))
+        outState.putIntegerArrayList(
+            TASKS_TO_DELETE,
+            ArrayList(tasksToDelete.map { t -> t.id })
+        )
         outState.putBoolean(REST, rest)
         super.onSaveInstanceState(outState)
     }
 
     private fun setObserver() {
-        val tasks = if (searchQuery == "" || searchQuery == null) repo.getAll() else repo.findTasks(
-            searchQuery!!
-        )
+        val tasks =
+            if (searchQuery == "" || searchQuery == null) repo.getAll()
+            else repo.findTasks(searchQuery!!)
         tasks.observe(this@TasksListActivity) { tasks ->
             adapter!!.submitList(tasks)
         }
