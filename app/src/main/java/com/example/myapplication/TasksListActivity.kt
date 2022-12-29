@@ -32,7 +32,7 @@ class TasksListActivity : AppCompatActivity() {
 
     private var rest: Boolean = false
     private var restAvailable: Boolean = false
-    lateinit var repo: ITaskRepository
+    private lateinit var repo: ITaskRepository
     private var searchQuery: String? = null
 
     private lateinit var recyclerView: RecyclerView
@@ -41,6 +41,7 @@ class TasksListActivity : AppCompatActivity() {
 
     private var editing = false
     private lateinit var floatingButton: FloatingActionButton
+    private lateinit var cloudButton: FloatingActionButton
     private var tasksToDelete = ArrayList<Task>()
     private var tasksToDeleteIds = ArrayList<Int>()
     private lateinit var tasks: LiveData<List<Task>>
@@ -149,11 +150,42 @@ class TasksListActivity : AppCompatActivity() {
         return true
     }
 
+    private fun setCloudButtonStyle() {
+        val color = if (rest) {
+            cloudButton.setImageResource(R.drawable.ic_cloudon)
+            ContextCompat.getColor(this, R.color.yellow)
+        } else {
+            cloudButton.setImageResource(R.drawable.ic_cloudoff)
+            ContextCompat.getColor(this, R.color.gray)
+        }
+
+        cloudButton.backgroundTintList = ColorStateList.valueOf(color)
+    }
+
+    private fun setCloudButton() {
+        cloudButton.visibility = View.VISIBLE
+        setCloudButtonStyle()
+
+        cloudButton.setOnClickListener {
+            rest = !rest
+            setCloudButtonStyle()
+
+            if (cloudButton.hasOnClickListeners())
+                return@setOnClickListener
+
+            cloudButton.setOnClickListener {}
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tasks_list)
 
         restAvailable = intent.getBooleanExtra(REST_AVAILABLE, false)
+        if (restAvailable) {
+            cloudButton = findViewById(R.id.cloud_task)
+            setCloudButton()
+        }
 
         repo = if (rest) {
             TaskRestRepo.getInstance()
@@ -174,8 +206,10 @@ class TasksListActivity : AppCompatActivity() {
         setFloatingButton()
         recyclerView.adapter = TaskAdapter()
 
-        if (searchQuery != null && searchQuery != "")
+        if (searchQuery != null) {
             updateQuery()
+            return
+        }
 
         tasks = repo.getAll()
         tasks.observe(this) { tasks ->
@@ -203,7 +237,7 @@ class TasksListActivity : AppCompatActivity() {
             val date: TextView = view.findViewById(R.id.date)
 
             var layout: LinearLayout = view.findViewById(R.id.linearLayout)
-            var checkBox: CheckBox? = null
+            private var checkBox: CheckBox? = null
 
             private fun addCheckBox(task: Task) {
                 if (checkBox != null)
@@ -245,11 +279,6 @@ class TasksListActivity : AppCompatActivity() {
                 checkBox = null
             }
 
-            private fun firstCheckBox(task: Task) {
-                addCheckBox(task)
-                checkBox!!.isChecked = true
-            }
-
             fun setEvents(task: Task) {
                 if (editing) {
                     addCheckBox(task)
@@ -262,7 +291,7 @@ class TasksListActivity : AppCompatActivity() {
                 }
                 view.setOnLongClickListener {
                     editing = true
-                    firstCheckBox(task)
+                    tasksToDelete.add(task)
                     setFloatingButton()
                     notifyDataSetChanged()
                     true
@@ -284,18 +313,16 @@ class TasksListActivity : AppCompatActivity() {
             viewHolder.title.text = task.getHeader()
 
             // XD
-            val formatter = DateTimeFormatter.ofPattern("d MMMM, H:mm")
+            val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, H:mm ")
             viewHolder.date.text =
-                task.date.toLocalDateTime(TimeZone.UTC).toJavaLocalDateTime().format(formatter)
+                task.date
+                    .toLocalDateTime(TimeZone.currentSystemDefault())
+                    .toJavaLocalDateTime()
+                    .format(formatter)
 
             viewHolder.setEvents(dataSet[position])
         }
 
         override fun getItemCount() = dataSet.size
-    }
-
-    override fun onPause() {
-//        repo.getAll().removeObservers(this)
-        super.onPause()
     }
 }
