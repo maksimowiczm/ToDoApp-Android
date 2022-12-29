@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.EditText
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.BlendModeColorFilterCompat
 import androidx.core.graphics.BlendModeCompat
@@ -89,7 +90,7 @@ class TaskActivity : AppCompatActivity() {
         }
     }
 
-    fun saveTask() {
+    private fun saveTask() {
         thread {
             val newTitle: String? = if (title == "") null else title
             val repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
@@ -114,5 +115,10 @@ class TaskActivity : AppCompatActivity() {
             return
 
         saveTask()
+
+        val toastText =
+            if (id == -1) getString(R.string.task_added)
+            else getString(R.string.task_saved)
+        Toast.makeText(application, toastText, Toast.LENGTH_SHORT).show()
     }
 }

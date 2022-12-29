@@ -6,11 +6,8 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
 import android.view.*
-import android.widget.CheckBox
-import android.widget.LinearLayout
-import android.widget.SearchView
+import android.widget.*
 import android.widget.SearchView.OnQueryTextListener
-import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
@@ -69,6 +66,11 @@ class TasksListActivity : AppCompatActivity() {
                 }
 
                 runOnUiThread {
+                    val str = getString(R.string.task_deleted) + " " +
+                            tasksToDelete.size.toString() + " " +
+                            resources.getQuantityString(R.plurals.tasks_deleted, tasksToDelete.size)
+
+                    Toast.makeText(application, str, Toast.LENGTH_SHORT).show()
                     editing = false
                     setFloatingButton()
                     adapter!!.notifyDataSetChanged()

@@ -1,9 +1,17 @@
 <resources>
-    <string name="app_name">Notatki</string>
+    <string name="app_name">Notatnik</string>
     <string name="add">Dodaj</string>
 
     <string name="desc_hint">Zawartość</string>
     <string name="title_hint">Tytuł</string>
     <string name="search_task">Wyszukaj</string>
     <string name="save">Zapisz</string>
+    <string name="task_saved">Notatka zapisana</string>
+    <string name="task_added">Notatka utworzona</string>
+    <string name="task_deleted">Usunięto</string>
+    <plurals name="tasks_deleted">
+        <item quantity="one">notatkę</item>
+        <item quantity="few">notatki</item>
+        <item quantity="other">notatek</item>
+    </plurals>
 </resources>
