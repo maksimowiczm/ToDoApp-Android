@@ -86,6 +86,21 @@ class TasksListActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
     }
 
+    private fun updateQuery() {
+        if (searchQuery == null)
+            return
+
+        val tasks = if (searchQuery == "") repo.getAll else repo.findTasks(searchQuery!!)
+        tasks.observe(this@TasksListActivity) { tasks ->
+            adapter!!.submitList(tasks)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateQuery()
+    }
+
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.main_menu, menu)
 
@@ -115,11 +130,7 @@ class TasksListActivity : AppCompatActivity() {
 
             override fun onQueryTextChange(newText: String): Boolean {
                 searchQuery = newText
-                val tasks = if (searchQuery == "") repo.getAll else repo.findTasks(searchQuery!!)
-                tasks.observe(this@TasksListActivity) { tasks ->
-                    adapter!!.submitList(tasks)
-                }
-
+                updateQuery()
                 return true
             }
         })

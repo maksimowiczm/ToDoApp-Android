@@ -22,7 +22,7 @@ interface TaskDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun addTask(task: Task)
 
-    @Query("select * from tasks where title like '%' || :title || '%' ORDER BY date DESC")
+    @Query("select distinct * from tasks where title like '%' || :title || '%' or `desc` like '%' || :title || '%' ORDER BY date DESC")
     fun findTask(title: String): LiveData<List<Task>>
 
     @Delete
