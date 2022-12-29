@@ -180,6 +180,9 @@ class TasksListActivity : AppCompatActivity() {
                     return
 
                 checkBox = CheckBox(this@TasksListActivity)
+                val color = ContextCompat.getColor(this@TasksListActivity, R.color.yellow)
+                checkBox!!.buttonTintList = ColorStateList.valueOf(color)
+
                 if (tasksToDelete.contains(task))
                     checkBox!!.isChecked = true
 
