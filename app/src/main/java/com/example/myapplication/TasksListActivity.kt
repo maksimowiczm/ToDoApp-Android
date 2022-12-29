@@ -27,7 +27,7 @@ class TasksListActivity : AppCompatActivity() {
         const val TASKS_TO_DELETE = "tasksToDelete"
     }
 
-    lateinit var repo: TaskRepository
+    lateinit var repo: TaskLocalRepository
     private var searchQuery: String? = null
 
     private lateinit var recyclerView: RecyclerView
@@ -141,7 +141,7 @@ class TasksListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tasks_list)
-        repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
+        repo = TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
 
         if (savedInstanceState != null) {
             searchQuery = savedInstanceState.getString(SEARCH_QUERY)

@@ -61,7 +61,7 @@ class TaskActivity : AppCompatActivity() {
         thread {
             id = intent.getIntExtra(TasksListActivity.TASK, -1)
             if (id != -1) {
-                val repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
+                val repo = TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
                 task = repo.getTask(id)
 
                 runOnUiThread {
@@ -93,7 +93,7 @@ class TaskActivity : AppCompatActivity() {
     private fun saveTask() {
         thread {
             val newTitle: String? = if (title == "") null else title
-            val repo = TaskRepository(TaskDatabase.getInstance(application).taskDao())
+            val repo = TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
 
             // id == -1 = nowy task
             if (id == -1) {
