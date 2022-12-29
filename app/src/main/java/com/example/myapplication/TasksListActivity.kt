@@ -100,14 +100,14 @@ class TasksListActivity : AppCompatActivity() {
         outState.putString(SEARCH_QUERY, searchQuery)
         outState.putBoolean(EDITING, editing)
         outState.putIntegerArrayList(TASKS_TO_DELETE, ArrayList(tasksToDelete.map { t -> t.id }))
+        outState.putBoolean(REST, rest)
         super.onSaveInstanceState(outState)
     }
 
-    private fun updateQuery() {
-        if (searchQuery == null)
-            return
-
-        val tasks = if (searchQuery == "") repo.getAll() else repo.findTasks(searchQuery!!)
+    private fun setObserver() {
+        val tasks = if (searchQuery == "" || searchQuery == null) repo.getAll() else repo.findTasks(
+            searchQuery!!
+        )
         tasks.observe(this@TasksListActivity) { tasks ->
             adapter!!.submitList(tasks)
         }
@@ -115,7 +115,7 @@ class TasksListActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        updateQuery()
+        setObserver()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -142,7 +142,7 @@ class TasksListActivity : AppCompatActivity() {
 
             override fun onQueryTextChange(newText: String): Boolean {
                 searchQuery = newText
-                updateQuery()
+                setObserver()
                 return true
             }
         })
@@ -166,14 +166,18 @@ class TasksListActivity : AppCompatActivity() {
         cloudButton.visibility = View.VISIBLE
         setCloudButtonStyle()
 
+        if (cloudButton.hasOnClickListeners())
+            return
+
         cloudButton.setOnClickListener {
             rest = !rest
             setCloudButtonStyle()
 
-            if (cloudButton.hasOnClickListeners())
-                return@setOnClickListener
+            repo =
+                if (rest) TaskRestRepo.getInstance()
+                else TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
 
-            cloudButton.setOnClickListener {}
+            setObserver()
         }
     }
 
@@ -181,24 +185,23 @@ class TasksListActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_tasks_list)
 
+        if (savedInstanceState != null) {
+            searchQuery = savedInstanceState.getString(SEARCH_QUERY)
+            editing = savedInstanceState.getBoolean(EDITING)
+            rest = savedInstanceState.getBoolean(REST)
+            tasksToDeleteIds =
+                savedInstanceState.getIntegerArrayList(TASKS_TO_DELETE) as ArrayList<Int>
+        }
+
         restAvailable = intent.getBooleanExtra(REST_AVAILABLE, false)
         if (restAvailable) {
             cloudButton = findViewById(R.id.cloud_task)
             setCloudButton()
         }
 
-        repo = if (rest) {
-            TaskRestRepo.getInstance()
-        } else {
-            TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
-        }
-
-        if (savedInstanceState != null) {
-            searchQuery = savedInstanceState.getString(SEARCH_QUERY)
-            editing = savedInstanceState.getBoolean(EDITING)
-            tasksToDeleteIds =
-                savedInstanceState.getIntegerArrayList(TASKS_TO_DELETE) as ArrayList<Int>
-        }
+        repo =
+            if (rest) TaskRestRepo.getInstance()
+            else TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
 
         recyclerView = findViewById(R.id.recycler_view)
         floatingButton = findViewById(R.id.add_task)
@@ -207,18 +210,11 @@ class TasksListActivity : AppCompatActivity() {
         recyclerView.adapter = TaskAdapter()
 
         if (searchQuery != null) {
-            updateQuery()
+            setObserver()
             return
         }
 
-        tasks = repo.getAll()
-        tasks.observe(this) { tasks ->
-            for (task in tasks)
-                if (tasksToDeleteIds.contains(task.id))
-                    tasksToDelete.add(task)
-
-            adapter!!.submitList(tasks)
-        }
+        setObserver()
     }
 
     // task_fragment.xml
@@ -285,6 +281,7 @@ class TasksListActivity : AppCompatActivity() {
                     return
                 }
 
+                cloudButton.visibility = View.VISIBLE
                 removeCheckBox()
                 view.setOnClickListener {
                     launchTaskActivity(false, task.id)
@@ -292,6 +289,7 @@ class TasksListActivity : AppCompatActivity() {
                 view.setOnLongClickListener {
                     editing = true
                     tasksToDelete.add(task)
+                    cloudButton.visibility = View.INVISIBLE
                     setFloatingButton()
                     notifyDataSetChanged()
                     true
