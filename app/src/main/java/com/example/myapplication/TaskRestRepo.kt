@@ -49,6 +49,21 @@ class TaskRestRepo private constructor() : ITaskRepository {
 
     private val liveTasks = MutableLiveData<List<Task>>()
 
+    fun getStatus(): Boolean {
+        val (_, _, result) =
+            ("http://192.168.2.43:3000/")
+                .httpGet()
+                .timeout(1000)
+                .response()
+
+        val (_, error) = result
+
+        if (error != null)
+            return false
+
+        return true
+    }
+
     private fun getTasksApi(): LiveData<List<Task>> {
         Fuel.get("http://192.168.2.43:3000/tasks")
             .timeout(3000)

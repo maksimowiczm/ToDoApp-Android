@@ -19,8 +19,7 @@ class MainActivity : AppCompatActivity() {
             // hehe
             // Thread.sleep(250)
             val restAvailable = try {
-                TaskRestRepo.getInstance().getAll()
-                true
+                TaskRestRepo.getInstance().getStatus()
             } catch (e: Exception) {
                 false
             }
