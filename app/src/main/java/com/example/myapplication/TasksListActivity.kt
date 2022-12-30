@@ -191,6 +191,9 @@ class TasksListActivity : AppCompatActivity() {
     }
 
     private fun setCloudButtonStyle() {
+        if(!restAvailable)
+            return
+
         val color = if (rest) {
             cloudButton.setImageResource(R.drawable.ic_cloudon)
             ContextCompat.getColor(this, R.color.yellow)
@@ -203,6 +206,9 @@ class TasksListActivity : AppCompatActivity() {
     }
 
     private fun setCloudButton() {
+        if(!restAvailable)
+            return
+
         cloudButton.visibility = View.VISIBLE
         setCloudButtonStyle()
 
@@ -233,11 +239,10 @@ class TasksListActivity : AppCompatActivity() {
                 savedInstanceState.getIntegerArrayList(TASKS_TO_DELETE) as ArrayList<Int>
         }
 
+        cloudButton = findViewById(R.id.cloud_task)
         restAvailable = intent.getBooleanExtra(REST_AVAILABLE, false)
-        if (restAvailable) {
-            cloudButton = findViewById(R.id.cloud_task)
+        if (restAvailable)
             setCloudButton()
-        }
 
         repo =
             if (rest) TaskRestRepo.getInstance()
@@ -321,7 +326,9 @@ class TasksListActivity : AppCompatActivity() {
                     return
                 }
 
-                cloudButton.visibility = View.VISIBLE
+                if(restAvailable)
+                    cloudButton.visibility = View.VISIBLE
+
                 removeCheckBox()
                 view.setOnClickListener {
                     launchTaskActivity(false, task.id)

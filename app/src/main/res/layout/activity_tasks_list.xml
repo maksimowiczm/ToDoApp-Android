@@ -32,7 +32,6 @@
         android:layout_marginEnd="@dimen/fab_margin"
         android:layout_marginBottom="16dp"
         android:src="@drawable/ic_cloudoff"
-        android:visibility="invisible"
-        app:backgroundTint="@color/black" />
+        android:visibility="invisible" />
 
 </RelativeLayout>
