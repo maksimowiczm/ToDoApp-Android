@@ -1,13 +1,16 @@
-package com.example.myapplication
+package com.example.myapplication.repos
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.myapplication.models.Task
 import com.github.kittinunf.fuel.*
 import com.github.kittinunf.fuel.core.extensions.jsonBody
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
+
+private const val SERVER = "http://192.168.2.43:3000/"
 
 class TaskRestRepo private constructor() : ITaskRepository {
     companion object {
@@ -51,7 +54,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
 
     fun getStatus(): Boolean {
         val (_, _, result) =
-            ("http://192.168.2.43:3000/")
+            (SERVER)
                 .httpGet()
                 .timeout(1000)
                 .response()
@@ -65,7 +68,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
     }
 
     private fun getTasksApi(): LiveData<List<Task>> {
-        Fuel.get("http://192.168.2.43:3000/tasks")
+        Fuel.get("${SERVER}tasks")
             .timeout(3000)
             .response { _, response, result ->
                 val (_, error) = result
@@ -90,7 +93,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
 
     private fun getTaskApi(id: Int): Task {
         val (_, response, result) =
-            ("http://192.168.2.43:3000/tasks/$id")
+            ("${SERVER}tasks/${id}")
                 .httpGet()
                 .timeout(3000)
                 .response()
@@ -113,7 +116,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
 
     private fun addTaskApi(task: Task) {
         val (_, _, result) =
-            "http://192.168.2.43:3000/tasks"
+            ("${SERVER}tasks")
                 .httpPost()
                 .jsonBody(Json.encodeToString(task))
                 .timeout(3000)
@@ -128,8 +131,9 @@ class TaskRestRepo private constructor() : ITaskRepository {
     }
 
     private fun updateTaskApi(task: Task) {
+        val id = task.id
         val (_, _, result) =
-            ("http://192.168.2.43:3000/tasks/" + task.id)
+            ("${SERVER}tasks/${id}")
                 .httpPatch()
                 .jsonBody(Json.encodeToString(task))
                 .timeout(3000)
@@ -145,7 +149,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
 
     private fun deleteTaskApi(id: Int) {
         val (_, _, result) =
-            ("http://192.168.2.43:3000/tasks/$id")
+            ("${SERVER}tasks/${id}")
                 .httpDelete()
                 .timeout(3000)
                 .response()

@@ -1,11 +1,12 @@
-package com.example.myapplication
+package com.example.myapplication.repos
 
 import android.content.Context
 import androidx.room.*
-import com.example.myapplication.converters.Converters
+import com.example.myapplication.converters.InstantConverter
+import com.example.myapplication.models.Task
 
 @Database(entities = [Task::class], version = 1, exportSchema = false)
-@TypeConverters(Converters::class)
+@TypeConverters(InstantConverter::class)
 abstract class TaskDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
 

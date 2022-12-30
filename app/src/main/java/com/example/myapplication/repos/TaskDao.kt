@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.repos
 
 import androidx.lifecycle.LiveData
 import androidx.room.Dao
@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
+import com.example.myapplication.models.Task
 
 @Dao
 interface TaskDao {

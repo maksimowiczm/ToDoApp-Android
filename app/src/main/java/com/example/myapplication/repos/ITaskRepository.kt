@@ -1,6 +1,7 @@
-package com.example.myapplication
+package com.example.myapplication.repos
 
 import androidx.lifecycle.LiveData
+import com.example.myapplication.models.Task
 
 interface ITaskRepository {
     fun getAll(): LiveData<List<Task>>

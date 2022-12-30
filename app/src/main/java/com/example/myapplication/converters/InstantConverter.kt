@@ -3,7 +3,7 @@ package com.example.myapplication.converters
 import androidx.room.TypeConverter
 import kotlinx.datetime.Instant
 
-class Converters {
+class InstantConverter {
     @TypeConverter
     fun fromTimestamp(value: Long?): Instant? {
         return Instant.fromEpochMilliseconds(value!!)
