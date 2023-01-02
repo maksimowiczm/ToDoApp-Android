@@ -50,34 +50,37 @@ class TasksListActivity : AppCompatActivity() {
 
     private var resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                val data: Intent = result.data ?: return@registerForActivityResult
+            if (result.resultCode != Activity.RESULT_OK)
+                return@registerForActivityResult
 
-                val edited = data.getBooleanExtra(TaskActivity.EDITED, false)
-                if (edited) {
-                    val id = data.getIntExtra(TaskActivity.ID, -1)
-                    var title = data.getStringExtra(TaskActivity.TITLE)
-                    val desc = data.getStringExtra(TaskActivity.DESC)
-                    if (title == "")
-                        title = null
+            val data: Intent = result.data ?: return@registerForActivityResult
 
-                    thread {
-                        val text =
-                            if (id == -1) {
-                                repo.addTask(Task(title, desc!!))
-                                getString(R.string.task_added)
-                            } else {
-                                val task = repo.getTask(id)
-                                task.title = title
-                                task.desc = desc!!
-                                repo.updateTask(task)
-                                getString(R.string.task_saved)
-                            }
+            val edited = data.getBooleanExtra(TaskActivity.EDITED, false)
+            if (!edited)
+                return@registerForActivityResult
 
-                        runOnUiThread {
-                            Toast.makeText(application, text, Toast.LENGTH_SHORT).show()
-                        }
+            val id = data.getIntExtra(TaskActivity.ID, -1)
+            var title = data.getStringExtra(TaskActivity.TITLE)
+            val desc = data.getStringExtra(TaskActivity.DESC)
+            if (title == "")
+                title = null
+
+            thread {
+                val text =
+                    if (id == -1) {
+                        repo.addTask(Task(title, desc!!))
+                        getString(R.string.task_added)
+                    } else {
+                        val task = repo.getTask(id)
+                        task.title = title
+                        task.desc = desc!!
+                        repo.updateTask(task)
+                        getString(R.string.task_saved)
                     }
+
+                // tost zapisano notatkę
+                runOnUiThread {
+                    Toast.makeText(application, text, Toast.LENGTH_SHORT).show()
                 }
             }
         }
@@ -193,7 +196,7 @@ class TasksListActivity : AppCompatActivity() {
     }
 
     private fun setCloudButtonStyle() {
-        if(!restAvailable)
+        if (!restAvailable)
             return
 
         val color = if (rest) {
@@ -208,7 +211,7 @@ class TasksListActivity : AppCompatActivity() {
     }
 
     private fun setCloudButton() {
-        if(!restAvailable)
+        if (!restAvailable)
             return
 
         cloudButton.visibility = View.VISIBLE
@@ -328,7 +331,7 @@ class TasksListActivity : AppCompatActivity() {
                     return
                 }
 
-                if(restAvailable)
+                if (restAvailable)
                     cloudButton.visibility = View.VISIBLE
 
                 removeCheckBox()

@@ -2,6 +2,7 @@ package com.example.myapplication.repos
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import com.example.myapplication.Settings
 import com.example.myapplication.models.Task
 import com.github.kittinunf.fuel.*
 import com.github.kittinunf.fuel.core.extensions.jsonBody
@@ -9,10 +10,9 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-
-private const val SERVER = "http://192.168.2.43:3000/"
-
 class TaskRestRepo private constructor() : ITaskRepository {
+    private val server = Settings.REST_ADDRESS
+
     companion object {
         private val repo: TaskRestRepo = TaskRestRepo()
 
@@ -54,7 +54,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
 
     fun getStatus(): Boolean {
         val (_, _, result) =
-            (SERVER)
+            (server)
                 .httpGet()
                 .timeout(1000)
                 .response()
@@ -68,7 +68,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
     }
 
     private fun getTasksApi(): LiveData<List<Task>> {
-        Fuel.get("${SERVER}tasks")
+        Fuel.get("${server}tasks")
             .timeout(3000)
             .response { _, response, result ->
                 val (_, error) = result
@@ -93,7 +93,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
 
     private fun getTaskApi(id: Int): Task {
         val (_, response, result) =
-            ("${SERVER}tasks/${id}")
+            ("${server}tasks/${id}")
                 .httpGet()
                 .timeout(3000)
                 .response()
@@ -116,7 +116,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
 
     private fun addTaskApi(task: Task) {
         val (_, _, result) =
-            ("${SERVER}tasks")
+            ("${server}tasks")
                 .httpPost()
                 .jsonBody(Json.encodeToString(task))
                 .timeout(3000)
@@ -133,7 +133,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
     private fun updateTaskApi(task: Task) {
         val id = task.id
         val (_, _, result) =
-            ("${SERVER}tasks/${id}")
+            ("${server}tasks/${id}")
                 .httpPatch()
                 .jsonBody(Json.encodeToString(task))
                 .timeout(3000)
@@ -149,7 +149,7 @@ class TaskRestRepo private constructor() : ITaskRepository {
 
     private fun deleteTaskApi(id: Int) {
         val (_, _, result) =
-            ("${SERVER}tasks/${id}")
+            ("${server}tasks/${id}")
                 .httpDelete()
                 .timeout(3000)
                 .response()

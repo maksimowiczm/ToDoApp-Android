@@ -9,9 +9,13 @@
     <string name="task_saved">Notatka zapisana</string>
     <string name="task_added">Notatka utworzona</string>
     <string name="task_deleted">Usunięto</string>
+    <string name="server_dialog">serwer</string>
     <plurals name="tasks_deleted">
         <item quantity="one">notatkę</item>
         <item quantity="few">notatki</item>
         <item quantity="other">notatek</item>
     </plurals>
+    <string name="server_save">zapisz</string>
+    <string name="cancel">anuluj</string>
+    <string name="server_ip_hint">Podaj IP serwera notatnika</string>
 </resources>
