@@ -1,4 +1,4 @@
-package com.example.myapplication.repos
+package com.example.myapplication.data.repos
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
@@ -10,7 +10,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
-class TaskRestRepo private constructor() : ITaskRepository {
+class TaskRestRepo private constructor() : ITaskRepo {
     private val server = Settings.REST_ADDRESS
 
     companion object {

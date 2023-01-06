@@ -3,7 +3,7 @@ package com.example.myapplication
 import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import com.example.myapplication.repos.TaskRestRepo
+import com.example.myapplication.data.repos.TaskRestRepo
 import kotlin.concurrent.thread
 
 class MainActivity : AppCompatActivity() {

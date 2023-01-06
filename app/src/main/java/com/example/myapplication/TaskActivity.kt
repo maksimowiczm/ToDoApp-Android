@@ -12,7 +12,10 @@ import androidx.core.graphics.BlendModeColorFilterCompat
 import androidx.core.graphics.BlendModeCompat
 import androidx.core.widget.addTextChangedListener
 import com.example.myapplication.models.Task
-import com.example.myapplication.repos.*
+import com.example.myapplication.data.*
+import com.example.myapplication.data.repos.ITaskRepo
+import com.example.myapplication.data.repos.TaskLocalRepo
+import com.example.myapplication.data.repos.TaskRestRepo
 import kotlin.concurrent.thread
 
 class TaskActivity : AppCompatActivity() {
@@ -29,7 +32,7 @@ class TaskActivity : AppCompatActivity() {
 
     private var edited: Boolean = false
     private var rest: Boolean? = null
-    lateinit var repo: ITaskRepository
+    lateinit var repo: ITaskRepo
 
     private var defaultTitle: String = ""
     private var defaultDesc: String = ""
@@ -87,7 +90,7 @@ class TaskActivity : AppCompatActivity() {
         repo = if (rest!!) {
             TaskRestRepo.getInstance()
         } else {
-            TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
+            TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
         }
 
         thread {

@@ -14,7 +14,10 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.example.myapplication.models.Task
-import com.example.myapplication.repos.*
+import com.example.myapplication.data.*
+import com.example.myapplication.data.repos.ITaskRepo
+import com.example.myapplication.data.repos.TaskLocalRepo
+import com.example.myapplication.data.repos.TaskRestRepo
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
@@ -35,7 +38,7 @@ class TasksListActivity : AppCompatActivity() {
 
     private var rest: Boolean = false
     private var restAvailable: Boolean = false
-    private lateinit var repo: ITaskRepository
+    private lateinit var repo: ITaskRepo
     private var searchQuery: String? = null
 
     private lateinit var recyclerView: RecyclerView
@@ -226,7 +229,7 @@ class TasksListActivity : AppCompatActivity() {
 
             repo =
                 if (rest) TaskRestRepo.getInstance()
-                else TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
+                else TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
 
             setObserver()
         }
@@ -251,7 +254,7 @@ class TasksListActivity : AppCompatActivity() {
 
         repo =
             if (rest) TaskRestRepo.getInstance()
-            else TaskLocalRepository(TaskDatabase.getInstance(application).taskDao())
+            else TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
 
         recyclerView = findViewById(R.id.recycler_view)
         floatingButton = findViewById(R.id.add_task)
