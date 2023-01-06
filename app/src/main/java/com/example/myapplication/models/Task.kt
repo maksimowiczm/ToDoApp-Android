@@ -2,6 +2,7 @@ package com.example.myapplication.models
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
+import androidx.room.Index
 import androidx.room.PrimaryKey
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -15,6 +16,9 @@ import kotlinx.serialization.Serializable
             childColumns = ["categoryId"],
             parentColumns = ["id"]
         )
+    ],
+    indices = [
+        Index(value = ["categoryId"])
     ])
 data class Task(
     var title: String? = null,
