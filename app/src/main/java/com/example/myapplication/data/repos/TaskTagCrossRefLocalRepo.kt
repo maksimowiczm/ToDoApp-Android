@@ -1,12 +1,11 @@
 package com.example.myapplication.data.repos
 
-import androidx.lifecycle.LiveData
 import com.example.myapplication.data.daos.TaskTagCrossRefDao
 import com.example.myapplication.models.TaskTagCrossRef
 
 class TaskTagCrossRefLocalRepo(private val taskTagCrossRefDao: TaskTagCrossRefDao) :
     ITaskTagCrossRefRepo {
-    override fun getAll(): LiveData<List<TaskTagCrossRef>> {
+    override fun getAll(): List<TaskTagCrossRef> {
         return taskTagCrossRefDao.getAll()
     }
 
@@ -14,7 +13,7 @@ class TaskTagCrossRefLocalRepo(private val taskTagCrossRefDao: TaskTagCrossRefDa
         return taskTagCrossRefDao.getTaskTagCrossRef(taskId, tagId)
     }
 
-    override fun getTaskTagCrossRefForTask(taskId: Int): LiveData<List<TaskTagCrossRef>> {
+    override fun getTaskTagCrossRefForTask(taskId: Int): List<TaskTagCrossRef> {
         return taskTagCrossRefDao.getTaskTagCrossRefForTask(taskId)
     }
 

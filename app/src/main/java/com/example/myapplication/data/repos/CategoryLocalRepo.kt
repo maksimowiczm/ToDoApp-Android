@@ -1,11 +1,10 @@
 package com.example.myapplication.data.repos
 
-import androidx.lifecycle.LiveData
 import com.example.myapplication.data.daos.CategoryDao
 import com.example.myapplication.models.Category
 
 class CategoryLocalRepo(private val categoryDao: CategoryDao) : ICategoryRepo {
-    override fun getAll(): LiveData<List<Category>> {
+    override fun getAll(): List<Category> {
         return categoryDao.getAll()
     }
 

@@ -25,7 +25,7 @@ abstract class ToDoDatabase : RoomDatabase() {
     abstract fun taskDao(): TaskDao
     abstract fun tagDao(): TagDao
     abstract fun categoryDao(): CategoryDao
-    abstract fun TaskTagCrossRefDao(): TaskTagCrossRefDao
+    abstract fun taskTagCrossRefDao(): TaskTagCrossRefDao
 
     companion object {
         @Volatile

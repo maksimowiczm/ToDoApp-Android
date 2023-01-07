@@ -5,7 +5,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.EditText
+import android.widget.Spinner
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.BlendModeColorFilterCompat
@@ -13,9 +17,8 @@ import androidx.core.graphics.BlendModeCompat
 import androidx.core.widget.addTextChangedListener
 import com.example.myapplication.models.Task
 import com.example.myapplication.data.*
-import com.example.myapplication.data.repos.ITaskRepo
-import com.example.myapplication.data.repos.TaskLocalRepo
-import com.example.myapplication.data.repos.TaskRestRepo
+import com.example.myapplication.data.repos.*
+import com.example.myapplication.models.Category
 import kotlin.concurrent.thread
 
 class TaskActivity : AppCompatActivity() {
@@ -24,23 +27,30 @@ class TaskActivity : AppCompatActivity() {
         const val TITLE = "title"
         const val DESC = "desc"
         const val ID = "id"
+        const val CATEGORY_ID = "category_id"
     }
 
     private lateinit var editTitle: EditText
     private lateinit var editDesc: EditText
     private lateinit var saveButton: MenuItem
+    private lateinit var categorySpinner: Spinner
 
     private var edited: Boolean = false
     private var rest: Boolean? = null
     lateinit var repo: ITaskRepo
+    lateinit var categoryRepo: ICategoryRepo
 
     private var defaultTitle: String = ""
     private var defaultDesc: String = ""
+    private var defaultCategoryId: Int = -1
     private var id: Int = -1
     private var title: String = ""
     private var desc: String = ""
+    private var categoryId: Int = -1
 
     private lateinit var task: Task
+    private lateinit var categories: List<Category>
+    private lateinit var categoriesTitles: List<String>
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.task_menu, menu)
@@ -52,6 +62,7 @@ class TaskActivity : AppCompatActivity() {
             resultIntent.putExtra(DESC, desc)
             resultIntent.putExtra(EDITED, edited)
             resultIntent.putExtra(ID, id)
+            resultIntent.putExtra(CATEGORY_ID, categoryId)
             setResult(Activity.RESULT_OK, resultIntent)
             finish()
             true
@@ -81,10 +92,12 @@ class TaskActivity : AppCompatActivity() {
             edited = savedInstanceState.getBoolean(EDITED)
             title = savedInstanceState.getString(TITLE)!!
             desc = savedInstanceState.getString(DESC)!!
+            categoryId = savedInstanceState.getInt(CATEGORY_ID)
         }
 
         editTitle = findViewById(R.id.task_title)
         editDesc = findViewById(R.id.task_desc)
+        categorySpinner = findViewById(R.id.task_category_spinner)
 
         rest = intent.getBooleanExtra(TasksListActivity.REST, false)
         repo = if (rest!!) {
@@ -92,6 +105,8 @@ class TaskActivity : AppCompatActivity() {
         } else {
             TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
         }
+
+        categoryRepo = CategoryLocalRepo(ToDoDatabase.getInstance(application).categoryDao())
 
         thread {
             id = intent.getIntExtra(TasksListActivity.TASK, -1)
@@ -107,6 +122,8 @@ class TaskActivity : AppCompatActivity() {
                         defaultTitle = title
                         desc = task.desc
                         defaultDesc = desc
+                        categoryId = task.categoryId ?: -1
+                        defaultCategoryId = categoryId
                     }
                 } else {
                     runOnUiThread {
@@ -122,6 +139,8 @@ class TaskActivity : AppCompatActivity() {
                     editTitle.setSelection(editTitle.text.length)
                     editDesc.setSelection(editDesc.text.length)
                 }
+
+
             }
 
             runOnUiThread {
@@ -136,6 +155,37 @@ class TaskActivity : AppCompatActivity() {
                     setSaveIconColor()
                 }
             }
+
+            categories = categoryRepo.getAll()
+            categoriesTitles = categories.map { it.title }
+
+            val adapter = ArrayAdapter(this, R.layout.spinner_category, categoriesTitles)
+            categorySpinner.adapter = adapter
+
+            runOnUiThread {
+                categorySpinner.onItemSelectedListener = object :
+                    AdapterView.OnItemSelectedListener {
+                    override fun onItemSelected(
+                        parent: AdapterView<*>,
+                        view: View, position: Int, id: Long
+                    ) {
+                        categoryId =
+                            categories.find { it.title == categoriesTitles[position] }?.id ?: -1
+                        checkIfEdited()
+                    }
+
+                    override fun onNothingSelected(parent: AdapterView<*>) {
+                        categoryId = defaultCategoryId
+                        checkIfEdited()
+                    }
+
+
+                }
+                if (categoryId != -1){
+                    val idx = categoriesTitles.indexOf(categories.find { it.id == categoryId }?.title)
+                    categorySpinner.setSelection(idx)
+                }
+            }
         }
     }
 
@@ -148,7 +198,10 @@ class TaskActivity : AppCompatActivity() {
             edited = true
             return
         }
-
+        if (categoryId != defaultCategoryId) {
+            edited = true
+            return
+        }
         edited = false
     }
 
@@ -156,6 +209,7 @@ class TaskActivity : AppCompatActivity() {
         outState.putBoolean(EDITED, edited)
         outState.putString(TITLE, title)
         outState.putString(DESC, desc)
+        outState.putInt(CATEGORY_ID, categoryId)
         super.onSaveInstanceState(outState)
     }
 }

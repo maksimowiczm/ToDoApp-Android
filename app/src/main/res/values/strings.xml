@@ -4,6 +4,7 @@
 
     <string name="desc_hint">Zawartość</string>
     <string name="title_hint">Tytuł</string>
+    <string name="category_hint">Kategoria</string>
     <string name="search_task">Wyszukaj</string>
     <string name="save">Zapisz</string>
     <string name="task_saved">Notatka zapisana</string>

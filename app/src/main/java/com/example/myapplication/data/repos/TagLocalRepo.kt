@@ -1,11 +1,10 @@
 package com.example.myapplication.data.repos
 
-import androidx.lifecycle.LiveData
 import com.example.myapplication.data.daos.TagDao
 import com.example.myapplication.models.Tag
 
 class TagLocalRepo(private val tagDao: TagDao) : ITagRepo {
-    override fun getAll(): LiveData<List<Tag>> {
+    override fun getAll(): List<Tag> {
         return tagDao.getAll()
     }
 

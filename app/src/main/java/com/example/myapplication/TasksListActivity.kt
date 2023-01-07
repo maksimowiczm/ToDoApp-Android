@@ -13,11 +13,14 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.Settings.Companion.IconIdByName
 import com.example.myapplication.models.Task
 import com.example.myapplication.data.*
+import com.example.myapplication.data.repos.CategoryLocalRepo
 import com.example.myapplication.data.repos.ITaskRepo
 import com.example.myapplication.data.repos.TaskLocalRepo
 import com.example.myapplication.data.repos.TaskRestRepo
+import com.example.myapplication.models.Category
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toJavaLocalDateTime
@@ -50,6 +53,7 @@ class TasksListActivity : AppCompatActivity() {
     private lateinit var cloudButton: FloatingActionButton
     private var tasksToDelete = ArrayList<Task>()
     private var tasksToDeleteIds = ArrayList<Int>()
+    private lateinit var categories: List<Category>
 
     private var resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -65,18 +69,22 @@ class TasksListActivity : AppCompatActivity() {
             val id = data.getIntExtra(TaskActivity.ID, -1)
             var title = data.getStringExtra(TaskActivity.TITLE)
             val desc = data.getStringExtra(TaskActivity.DESC)
+            var categoryId: Int? = data.getIntExtra(TaskActivity.CATEGORY_ID, -1)
             if (title == "")
                 title = null
+            if(categoryId == -1)
+                categoryId = null
 
             thread {
                 val text =
                     if (id == -1) {
-                        repo.addTask(Task(title, desc!!))
+                        repo.addTask(Task(title, desc!!, categoryId))
                         getString(R.string.task_added)
                     } else {
                         val task = repo.getTask(id)
                         task.title = title
                         task.desc = desc!!
+                        task.categoryId = categoryId
                         repo.updateTask(task)
                         getString(R.string.task_saved)
                     }
@@ -268,6 +276,25 @@ class TasksListActivity : AppCompatActivity() {
         }
 
         setObserver()
+
+        thread {
+            categories = CategoryLocalRepo(ToDoDatabase.getInstance(application).categoryDao()).getAll()
+        }
+
+        //TODO: to do wyrzucenia potem
+        addCategoriesIfNotExist()
+
+    }
+
+    //dla lokalnej bazy
+    private fun addCategoriesIfNotExist(){
+        thread{
+            val catdao = ToDoDatabase.getInstance(application).categoryDao()
+            if(catdao.getAll().isNotEmpty())return@thread
+            catdao.addCategory(Category(title = "Praca", icon = "ic_category_work"))
+            catdao.addCategory(Category(title = "Dom", icon = "ic_category_home"))
+            catdao.addCategory(Category(title = "Hobby", icon = "ic_category_hobby"))
+        }
     }
 
     // task_fragment.xml
@@ -350,6 +377,14 @@ class TasksListActivity : AppCompatActivity() {
                     true
                 }
             }
+
+            fun setCategoryIcon(task: Task){
+                if(task.categoryId == null)
+                    return
+                val icon = IconIdByName(categories.find { it.id==task.categoryId }?.icon ?: "ic_delete", application)
+                title.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0)
+                title.compoundDrawablePadding = 15
+            }
         }
 
         override fun onCreateViewHolder(viewGroup: ViewGroup, viewType: Int): ViewHolder {
@@ -364,6 +399,8 @@ class TasksListActivity : AppCompatActivity() {
             val task = dataSet[position]
 
             viewHolder.title.text = task.getHeader()
+
+            viewHolder.setCategoryIcon(task)
 
             // XD
             val formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, H:mm ")

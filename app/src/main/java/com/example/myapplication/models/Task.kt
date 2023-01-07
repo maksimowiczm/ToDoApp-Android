@@ -23,11 +23,11 @@ import kotlinx.serialization.Serializable
 data class Task(
     var title: String? = null,
     var desc: String,
-    var date: Instant = Clock.System.now(),
+    var categoryId: Int? = null,
+    var date: Instant = Clock.System.now()
 ) {
     @PrimaryKey(autoGenerate = true)
     var id: Int = 0
-    var categoryId: Int? = null
 
     fun getHeader(): String {
         return if (title == null) desc else title!!

@@ -1,6 +1,5 @@
 package com.example.myapplication.data.daos
 
-import androidx.lifecycle.LiveData
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -12,7 +11,7 @@ import com.example.myapplication.models.Category
 @Dao
 interface CategoryDao {
     @Query("SELECT * FROM categories")
-    fun getAll(): LiveData<List<Category>>
+    fun getAll(): List<Category>
 
     @Query("SELECT * FROM categories WHERE id=:id LIMIT 1")
     fun getCategory(id: Int): Category
