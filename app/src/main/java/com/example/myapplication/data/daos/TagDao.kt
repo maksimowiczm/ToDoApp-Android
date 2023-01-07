@@ -24,4 +24,8 @@ interface TagDao {
 
     @Delete
     fun deleteTag(tag: Tag)
+
+    @Query("SELECT tg.title, tg.id FROM tags tg INNER JOIN tasktags tt ON tg.id = tt.tagId " +
+            "WHERE tt.taskId = :id ORDER BY tg.title")
+    fun getTagsForTask(id: Int): List<Tag>
 }

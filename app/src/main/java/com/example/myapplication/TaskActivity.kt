@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
@@ -8,8 +9,10 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.BlendModeColorFilterCompat
@@ -19,6 +22,7 @@ import com.example.myapplication.models.Task
 import com.example.myapplication.data.*
 import com.example.myapplication.data.repos.*
 import com.example.myapplication.models.Category
+import com.example.myapplication.models.Tag
 import kotlin.concurrent.thread
 
 class TaskActivity : AppCompatActivity() {
@@ -28,17 +32,21 @@ class TaskActivity : AppCompatActivity() {
         const val DESC = "desc"
         const val ID = "id"
         const val CATEGORY_ID = "category_id"
+        const val TAGS_ID = "tags_id"
     }
 
     private lateinit var editTitle: EditText
     private lateinit var editDesc: EditText
     private lateinit var saveButton: MenuItem
     private lateinit var categorySpinner: Spinner
+    private lateinit var tagsButton: Button
+    private lateinit var tagsTextView: TextView
 
     private var edited: Boolean = false
     private var rest: Boolean? = null
-    lateinit var repo: ITaskRepo
+    lateinit var taskRepo: ITaskRepo
     lateinit var categoryRepo: ICategoryRepo
+    lateinit var tagRepo: ITagRepo
 
     private var defaultTitle: String = ""
     private var defaultDesc: String = ""
@@ -51,6 +59,11 @@ class TaskActivity : AppCompatActivity() {
     private lateinit var task: Task
     private lateinit var categories: List<Category>
     private lateinit var categoriesTitles: List<String>
+    private var defaultTagsId: ArrayList<Int> = ArrayList()
+    private var tagsId: ArrayList<Int> = ArrayList()
+    private var tags: List<Tag> = emptyList()
+    private lateinit var tagsCheckedArr: BooleanArray
+    private lateinit var tagsTitlesArr: Array<String>
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.task_menu, menu)
@@ -63,6 +76,7 @@ class TaskActivity : AppCompatActivity() {
             resultIntent.putExtra(EDITED, edited)
             resultIntent.putExtra(ID, id)
             resultIntent.putExtra(CATEGORY_ID, categoryId)
+            resultIntent.putExtra(TAGS_ID, tagsId)
             setResult(Activity.RESULT_OK, resultIntent)
             finish()
             true
@@ -93,27 +107,35 @@ class TaskActivity : AppCompatActivity() {
             title = savedInstanceState.getString(TITLE)!!
             desc = savedInstanceState.getString(DESC)!!
             categoryId = savedInstanceState.getInt(CATEGORY_ID)
+            tagsId = savedInstanceState.getIntegerArrayList(TAGS_ID) as ArrayList<Int>
         }
 
         editTitle = findViewById(R.id.task_title)
         editDesc = findViewById(R.id.task_desc)
         categorySpinner = findViewById(R.id.task_category_spinner)
+        tagsTextView = findViewById(R.id.task_tags_text)
+        tagsButton = findViewById(R.id.task_tags_button)
 
         rest = intent.getBooleanExtra(TasksListActivity.REST, false)
-        repo = if (rest!!) {
+        taskRepo = if (rest!!) {
             TaskRestRepo.getInstance()
         } else {
             TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
         }
 
         categoryRepo = CategoryLocalRepo(ToDoDatabase.getInstance(application).categoryDao())
+        tagRepo = TagLocalRepo(ToDoDatabase.getInstance(application).tagDao())
 
         thread {
             id = intent.getIntExtra(TasksListActivity.TASK, -1)
+            categories = categoryRepo.getAll()
+            tags = tagRepo.getAll()
             if (id != -1) {
-                task = repo.getTask(id)
+                task = taskRepo.getTask(id)
 
                 if (!edited) {
+                    tagsId = ArrayList(tagRepo.getTagsForTask(id).map { it.id })
+                    defaultTagsId = ArrayList(tagsId)
                     runOnUiThread {
                         editTitle.setText(task.title)
                         editDesc.setText(task.desc)
@@ -126,6 +148,7 @@ class TaskActivity : AppCompatActivity() {
                         defaultCategoryId = categoryId
                     }
                 } else {
+                    defaultTagsId = ArrayList(tagRepo.getTagsForTask(id).map { it.id })
                     runOnUiThread {
                         editTitle.setText(title)
                         editDesc.setText(desc)
@@ -156,35 +179,93 @@ class TaskActivity : AppCompatActivity() {
                 }
             }
 
-            categories = categoryRepo.getAll()
-            categoriesTitles = categories.map { it.title }
+            addCategorySpinner()
 
+            addTagsDialog()
+        }
+    }
+
+    private fun addCategorySpinner() {
+        //inicjalizacja spinnera z kategoriami
+        runOnUiThread {
+            categoriesTitles = categories.map { it.title }
             val adapter = ArrayAdapter(this, R.layout.spinner_category, categoriesTitles)
             categorySpinner.adapter = adapter
 
+            categorySpinner.onItemSelectedListener = object :
+                AdapterView.OnItemSelectedListener {
+                override fun onItemSelected(
+                    parent: AdapterView<*>,
+                    view: View, position: Int, id: Long
+                ) {
+                    categoryId =
+                        categories.find { it.title == categoriesTitles[position] }?.id ?: -1
+                    checkIfEdited()
+                }
+
+                override fun onNothingSelected(parent: AdapterView<*>) {
+                    categoryId = defaultCategoryId
+                    checkIfEdited()
+                }
+            }
+            if (categoryId != -1) {
+                val idx =
+                    categoriesTitles.indexOf(categories.find { it.id == categoryId }?.title)
+                categorySpinner.setSelection(idx)
+            }
+        }
+    }
+
+    private fun addTagsDialog() {
+        //inicjalizacja selectlista do tagów
+        tags.filter { tag -> tagsId.contains(tag.id) }
+            .forEach { it.checked = true }
+
+        tagsCheckedArr = tags.map { it.checked }.toBooleanArray()
+        tagsTitlesArr = tags.map { it.title }.toTypedArray()
+
+        var tmpString = ""
+        tagsId.forEach {
+            tmpString = tmpString + " " + (tags.find { tag -> tag.id == it }?.title ?: "Błąd")
+        }
+
+        if (tmpString != "") {
             runOnUiThread {
-                categorySpinner.onItemSelectedListener = object :
-                    AdapterView.OnItemSelectedListener {
-                    override fun onItemSelected(
-                        parent: AdapterView<*>,
-                        view: View, position: Int, id: Long
-                    ) {
-                        categoryId =
-                            categories.find { it.title == categoriesTitles[position] }?.id ?: -1
-                        checkIfEdited()
+                tagsTextView.text = tmpString
+            }
+        }
+
+        runOnUiThread {
+            tagsButton.setOnClickListener {
+                val adBuilder = AlertDialog.Builder(this@TaskActivity)
+                adBuilder.setTitle(R.string.avilable_tags)
+
+                adBuilder.setMultiChoiceItems(tagsTitlesArr, tagsCheckedArr)
+                    { _, idx, isChecked -> tagsCheckedArr[idx] = isChecked }
+
+                adBuilder.setPositiveButton("OK") { _, _ ->
+                    tagsTextView.text = ""
+                    tagsTextView.hint = getString(R.string.tag_text_hint)
+                    var tmpTagString = ""
+                    val tmpTagsId = ArrayList<Int>()
+
+                    for (i in tagsCheckedArr.indices) {
+                        tags[i].checked = tagsCheckedArr[i]
+                        if (!tagsCheckedArr[i]) continue
+                        tmpTagString = tmpTagString + " " + tagsTitlesArr[i]
+                        tmpTagsId.add(tags[i].id)
                     }
-
-                    override fun onNothingSelected(parent: AdapterView<*>) {
-                        categoryId = defaultCategoryId
-                        checkIfEdited()
+                    if (tmpTagString!="") {
+                        tagsTextView.text = tmpTagString
                     }
-
-
+                    tagsId = tmpTagsId
+                    checkIfEdited()
                 }
-                if (categoryId != -1){
-                    val idx = categoriesTitles.indexOf(categories.find { it.id == categoryId }?.title)
-                    categorySpinner.setSelection(idx)
+                adBuilder.setNeutralButton("Cancel") { _, _ ->
+                    tagsCheckedArr = tags.map { it.checked }.toBooleanArray()
                 }
+                val dialog = adBuilder.create()
+                dialog.show()
             }
         }
     }
@@ -202,6 +283,10 @@ class TaskActivity : AppCompatActivity() {
             edited = true
             return
         }
+        if (tagsId != defaultTagsId) {
+            edited = true
+            return
+        }
         edited = false
     }
 
@@ -210,6 +295,7 @@ class TaskActivity : AppCompatActivity() {
         outState.putString(TITLE, title)
         outState.putString(DESC, desc)
         outState.putInt(CATEGORY_ID, categoryId)
+        outState.putIntegerArrayList(TAGS_ID, tagsId)
         super.onSaveInstanceState(outState)
     }
 }
