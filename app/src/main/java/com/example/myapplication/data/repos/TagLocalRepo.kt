@@ -23,8 +23,4 @@ class TagLocalRepo(private val tagDao: TagDao) : ITagRepo {
     override fun deleteTag(tag: Tag) {
         tagDao.deleteTag(tag)
     }
-
-    override fun getTagsForTask(id: Int): List<Tag> {
-        return tagDao.getTagsForTask(id)
-    }
 }

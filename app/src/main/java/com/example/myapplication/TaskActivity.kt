@@ -47,6 +47,7 @@ class TaskActivity : AppCompatActivity() {
     lateinit var taskRepo: ITaskRepo
     lateinit var categoryRepo: ICategoryRepo
     lateinit var tagRepo: ITagRepo
+    lateinit var taskTagRepo: ITaskTagCrossRefRepo
 
     private var defaultTitle: String = ""
     private var defaultDesc: String = ""
@@ -125,6 +126,7 @@ class TaskActivity : AppCompatActivity() {
 
         categoryRepo = CategoryLocalRepo(ToDoDatabase.getInstance(application).categoryDao())
         tagRepo = TagLocalRepo(ToDoDatabase.getInstance(application).tagDao())
+        taskTagRepo = TaskTagCrossRefLocalRepo(ToDoDatabase.getInstance(application).taskTagCrossRefDao())
 
         thread {
             id = intent.getIntExtra(TasksListActivity.TASK, -1)
@@ -134,7 +136,7 @@ class TaskActivity : AppCompatActivity() {
                 task = taskRepo.getTask(id)
 
                 if (!edited) {
-                    tagsId = ArrayList(tagRepo.getTagsForTask(id).map { it.id })
+                    tagsId = ArrayList(taskTagRepo.getTaskTagCrossRefForTask(id).map{it.tagId})
                     defaultTagsId = ArrayList(tagsId)
                     runOnUiThread {
                         editTitle.setText(task.title)
@@ -148,7 +150,7 @@ class TaskActivity : AppCompatActivity() {
                         defaultCategoryId = categoryId
                     }
                 } else {
-                    defaultTagsId = ArrayList(tagRepo.getTagsForTask(id).map { it.id })
+                    defaultTagsId = ArrayList(taskTagRepo.getTaskTagCrossRefForTask(id).map{it.tagId})
                     runOnUiThread {
                         editTitle.setText(title)
                         editDesc.setText(desc)

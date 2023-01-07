@@ -348,7 +348,7 @@ class TasksListActivity : AppCompatActivity() {
         inner class ViewHolder(private val view: View) : RecyclerView.ViewHolder(view) {
             val title: TextView = view.findViewById(R.id.title)
             val date: TextView = view.findViewById(R.id.date)
-            val tags: TextView = view.findViewById(R.id.tags)
+            val tagsText: TextView = view.findViewById(R.id.tags)
 
             var layout: LinearLayout = view.findViewById(R.id.linearLayout)
             private var checkBox: CheckBox? = null
@@ -418,14 +418,16 @@ class TasksListActivity : AppCompatActivity() {
 
             fun setTags(id: Int) {
                 thread {
-                    val taskTags = tagRepo.getTagsForTask(id)
+                    val taskTags = taskTagRepo.getTaskTagCrossRefForTask(id)
+                    val tags = tagRepo.getAll()
                     var tmpString = ""
                     taskTags.forEach {
-                        tmpString = tmpString + " " + it.title
+                        tmpString = "$tmpString " + (tags.find { tag -> tag.id == it.tagId }?.title
+                            ?: "Błąd!")
                     }
                     runOnUiThread {
-                        tags.text = tmpString
-                        tags.visibility = if (tmpString != "") TextView.VISIBLE else TextView.GONE
+                        tagsText.text = tmpString
+                        tagsText.visibility = if (tmpString != "") TextView.VISIBLE else TextView.GONE
                     }
                 }
             }

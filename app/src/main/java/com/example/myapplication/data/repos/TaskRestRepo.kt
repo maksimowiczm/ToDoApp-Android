@@ -56,7 +56,7 @@ class TaskRestRepo private constructor() : ITaskRepo {
         val (_, _, result) =
             (server)
                 .httpGet()
-                .timeout(1000)
+                .timeout(2000)
                 .response()
 
         val (_, error) = result

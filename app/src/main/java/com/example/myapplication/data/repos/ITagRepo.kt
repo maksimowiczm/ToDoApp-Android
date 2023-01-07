@@ -8,5 +8,4 @@ interface ITagRepo {
     fun getTag(id: Int): Tag
     fun updateTag(tag: Tag)
     fun deleteTag(tag: Tag)
-    fun getTagsForTask(id: Int): List<Tag>
 }
