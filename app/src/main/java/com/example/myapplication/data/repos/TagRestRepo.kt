@@ -55,23 +55,26 @@ class TagRestRepo private constructor() : ITagRepo {
     }
 
     private fun getTagsApi(): List<Tag> {
-        var tags = emptyList<Tag>()
-        Fuel.get("${server}tags")
-            .timeout(3000)
-            .response { _, response, result ->
-                val (_, error) = result
+        val tags: List<Tag>
 
-                if (error != null)
-                    throw Exception("lol")
+        val (_, response, result) =
+            ("${server}tags")
+                .httpGet()
+                .timeout(3000)
+                .response()
 
-                val tagsJson = String(response.data)
+        val (_, error) = result
 
-               tags = try {
-                    Json.decodeFromString(tagsJson)
-                } catch (e: Exception) {
-                    throw e
-                }
-            }
+        if (error != null)
+            throw Exception("lol")
+
+        val tagsJson = String(response.data)
+
+        tags = try {
+            Json.decodeFromString(tagsJson)
+        } catch (e: Exception) {
+            throw e
+        }
         return tags
     }
 

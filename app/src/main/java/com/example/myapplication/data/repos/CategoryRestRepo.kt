@@ -55,23 +55,25 @@ class CategoryRestRepo private constructor() : ICategoryRepo {
     }
 
     private fun getCategoriesApi(): List<Category> {
-        var categories = emptyList<Category>()
-        Fuel.get("${server}categories")
-            .timeout(3000)
-            .response { _, response, result ->
-                val (_, error) = result
+        var categories: List<Category>
+        val (_, response, result) =
+            ("${server}categories")
+                .httpGet()
+                .timeout(3000)
+                .response()
 
-                if (error != null)
-                    throw Exception("lol")
+        val (_, error) = result
 
-                val categoriesJson = String(response.data)
+        if (error != null)
+            throw Exception("lol")
 
-               categories = try {
-                    Json.decodeFromString(categoriesJson)
-                } catch (e: Exception) {
-                    throw e
-                }
-            }
+        val categoriesJson = String(response.data)
+
+        categories = try {
+            Json.decodeFromString(categoriesJson)
+        } catch (e: Exception) {
+            throw e
+        }
         return categories
     }
 

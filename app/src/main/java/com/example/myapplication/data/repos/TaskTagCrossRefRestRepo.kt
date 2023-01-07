@@ -56,25 +56,27 @@ class TaskTagCrossRefRestRepo private constructor() : ITaskTagCrossRefRepo {
     }
 
     private fun getTaskTagsCrossRefApi(): List<TaskTagCrossRef> {
-        var taskTags = emptyList<TaskTagJsonAdapter>()
-        Fuel.get("${server}tasktags")
-            .timeout(3000)
-            .response { _, response, result ->
-                val (_, error) = result
+        val taskTags: List<TaskTagJsonAdapter>
+        val (_, response, result) =
+            ("${server}tasktags")
+                .httpGet()
+                .timeout(3000)
+                .response()
 
-                if (error != null)
-                    throw Exception("lol")
+        val (_, error) = result
 
-                val taskTagsJson = String(response.data)
+        if (error != null)
+            throw Exception("lol")
 
-               taskTags = try {
-                    Json.decodeFromString(taskTagsJson)
-                } catch (e: Exception) {
-                    throw e
-                }
-            }
+        val taskTagsJson = String(response.data)
+
+        taskTags = try {
+            Json.decodeFromString(taskTagsJson)
+        } catch (e: Exception) {
+            throw e
+        }
         val newTaskTags = ArrayList<TaskTagCrossRef>()
-        taskTags.forEach { newTaskTags.add(TaskTagCrossRef(it.taskId,it.tagId)) }
+        taskTags.forEach { newTaskTags.add(TaskTagCrossRef(it.taskId, it.tagId)) }
         return newTaskTags.toList()
     }
 
@@ -157,26 +159,28 @@ class TaskTagCrossRefRestRepo private constructor() : ITaskTagCrossRefRepo {
             throw Exception("lol")
     }
 
-    private fun getTaskTagCrossRefForTaskApi(taskId: Int): List<TaskTagCrossRef>{
-        var taskTags = emptyList<TaskTagJsonAdapter>()
-        Fuel.get("${server}tasktags?taskId=${taskId}")
-            .timeout(3000)
-            .response { _, response, result ->
-                val (_, error) = result
+    private fun getTaskTagCrossRefForTaskApi(taskId: Int): List<TaskTagCrossRef> {
+        val taskTags: List<TaskTagJsonAdapter>
+        val (_, response, result) =
+            ("${server}tasktags?taskId=${taskId}")
+                .httpGet()
+                .timeout(3000)
+                .response()
 
-                if (error != null)
-                    throw Exception("lol")
+        val (_, error) = result
 
-                val taskTagsJson = String(response.data)
+        if (error != null)
+            throw Exception("lol")
 
-                taskTags = try {
-                    Json.decodeFromString(taskTagsJson)
-                } catch (e: Exception) {
-                    throw e
-                }
-            }
+        val taskTagsJson = String(response.data)
+
+        taskTags = try {
+            Json.decodeFromString(taskTagsJson)
+        } catch (e: Exception) {
+            throw e
+        }
         val newTaskTags = ArrayList<TaskTagCrossRef>()
-        taskTags.forEach { newTaskTags.add(TaskTagCrossRef(it.taskId,it.tagId)) }
+        taskTags.forEach { newTaskTags.add(TaskTagCrossRef(it.taskId, it.tagId)) }
         return newTaskTags.toList()
     }
 }
