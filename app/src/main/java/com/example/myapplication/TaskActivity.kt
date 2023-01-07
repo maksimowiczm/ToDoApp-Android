@@ -118,15 +118,17 @@ class TaskActivity : AppCompatActivity() {
         tagsButton = findViewById(R.id.task_tags_button)
 
         rest = intent.getBooleanExtra(TasksListActivity.REST, false)
-        taskRepo = if (rest!!) {
-            TaskRestRepo.getInstance()
+        if(rest!!){
+            taskRepo = TaskRestRepo.getInstance()
+            categoryRepo = CategoryRestRepo.getInstance()
+            tagRepo = TagRestRepo.getInstance()
+            taskTagRepo = TaskTagCrossRefRestRepo.getInstance()
         } else {
-            TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
+            taskRepo = TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
+            categoryRepo = CategoryLocalRepo(ToDoDatabase.getInstance(application).categoryDao())
+            tagRepo = TagLocalRepo(ToDoDatabase.getInstance(application).tagDao())
+            taskTagRepo = TaskTagCrossRefLocalRepo(ToDoDatabase.getInstance(application).taskTagCrossRefDao())
         }
-
-        categoryRepo = CategoryLocalRepo(ToDoDatabase.getInstance(application).categoryDao())
-        tagRepo = TagLocalRepo(ToDoDatabase.getInstance(application).tagDao())
-        taskTagRepo = TaskTagCrossRefLocalRepo(ToDoDatabase.getInstance(application).taskTagCrossRefDao())
 
         thread {
             id = intent.getIntExtra(TasksListActivity.TASK, -1)

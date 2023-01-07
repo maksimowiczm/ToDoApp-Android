@@ -257,11 +257,20 @@ class TasksListActivity : AppCompatActivity() {
             rest = !rest
             setCloudButtonStyle()
 
-            taskRepo =
-                if (rest) TaskRestRepo.getInstance()
-                else TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
-
+            setRepos()
             setObserver()
+        }
+    }
+
+    private fun setRepos(){
+        if(rest){
+            taskRepo = TaskRestRepo.getInstance()
+            tagRepo = TagRestRepo.getInstance()
+            taskTagRepo = TaskTagCrossRefRestRepo.getInstance()
+        } else {
+            taskRepo = TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
+            tagRepo = TagLocalRepo(ToDoDatabase.getInstance(application).tagDao())
+            taskTagRepo = TaskTagCrossRefLocalRepo(ToDoDatabase.getInstance(application).taskTagCrossRefDao())
         }
     }
 
@@ -282,13 +291,7 @@ class TasksListActivity : AppCompatActivity() {
         if (restAvailable)
             setCloudButton()
 
-        taskRepo =
-            if (rest) TaskRestRepo.getInstance()
-            else TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
-
-        tagRepo = TagLocalRepo(ToDoDatabase.getInstance(application).tagDao())
-        taskTagRepo =
-            TaskTagCrossRefLocalRepo(ToDoDatabase.getInstance(application).taskTagCrossRefDao())
+        setRepos()
 
         recyclerView = findViewById(R.id.recycler_view)
         floatingButton = findViewById(R.id.add_task)

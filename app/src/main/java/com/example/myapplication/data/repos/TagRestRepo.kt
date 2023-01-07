@@ -64,10 +64,10 @@ class TagRestRepo private constructor() : ITagRepo {
                 if (error != null)
                     throw Exception("lol")
 
-                val categoriesJson = String(response.data)
+                val tagsJson = String(response.data)
 
                tags = try {
-                    Json.decodeFromString(categoriesJson)
+                    Json.decodeFromString(tagsJson)
                 } catch (e: Exception) {
                     throw e
                 }
