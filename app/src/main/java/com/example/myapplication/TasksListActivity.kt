@@ -26,6 +26,7 @@ import kotlinx.datetime.toJavaLocalDateTime
 import kotlinx.datetime.toLocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlin.concurrent.thread
+import kotlin.random.Random
 
 class TasksListActivity : AppCompatActivity() {
     companion object {
@@ -43,7 +44,12 @@ class TasksListActivity : AppCompatActivity() {
     private lateinit var taskRepo: ITaskRepo
     private lateinit var tagRepo: ITagRepo
     private lateinit var taskTagRepo: ITaskTagCrossRefRepo
+    private lateinit var categoryRepo: ICategoryRepo
     private var searchQuery: String? = null
+
+    private var taskTagsElements = emptyList<TaskTagCrossRef>()
+    private var tagsElements = emptyList<Tag>()
+    private var categoriesElements = emptyList<Category>()
 
     private lateinit var recyclerView: RecyclerView
     private val adapter: TaskAdapter?
@@ -54,7 +60,6 @@ class TasksListActivity : AppCompatActivity() {
     private lateinit var cloudButton: FloatingActionButton
     private var tasksToDelete = ArrayList<Task>()
     private var tasksToDeleteIds = ArrayList<Int>()
-    private lateinit var categories: List<Category>
 
     private var resultLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -78,12 +83,13 @@ class TasksListActivity : AppCompatActivity() {
                 categoryId = null
 
             thread {
-
                 val text =
                     if (id == -1) {
-                        taskRepo.addTask(Task(title, desc!!, categoryId))
+                        val task = Task(title, desc!!, categoryId)
+                        task.id = Random.nextInt()
+                        taskRepo.addTask(task)
                         tagsId?.forEach {
-                            taskTagRepo.addTaskTagCrossRef(TaskTagCrossRef(id, it))
+                            taskTagRepo.addTaskTagCrossRef(TaskTagCrossRef(task.id, it))
                         }
                         getString(R.string.task_added)
                     } else {
@@ -115,6 +121,7 @@ class TasksListActivity : AppCompatActivity() {
                 runOnUiThread {
                     Toast.makeText(application, text, Toast.LENGTH_SHORT).show()
                 }
+                reloadDatabaseStaticData()
             }
         }
 
@@ -258,6 +265,7 @@ class TasksListActivity : AppCompatActivity() {
             setCloudButtonStyle()
 
             setRepos()
+            reloadDatabaseStaticData()
             setObserver()
         }
     }
@@ -267,10 +275,12 @@ class TasksListActivity : AppCompatActivity() {
             taskRepo = TaskRestRepo.getInstance()
             tagRepo = TagRestRepo.getInstance()
             taskTagRepo = TaskTagCrossRefRestRepo.getInstance()
+            categoryRepo = CategoryRestRepo.getInstance()
         } else {
             taskRepo = TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
             tagRepo = TagLocalRepo(ToDoDatabase.getInstance(application).tagDao())
             taskTagRepo = TaskTagCrossRefLocalRepo(ToDoDatabase.getInstance(application).taskTagCrossRefDao())
+            categoryRepo = CategoryLocalRepo(ToDoDatabase.getInstance(application).categoryDao())
         }
     }
 
@@ -293,6 +303,8 @@ class TasksListActivity : AppCompatActivity() {
 
         setRepos()
 
+        reloadDatabaseStaticData()
+
         recyclerView = findViewById(R.id.recycler_view)
         floatingButton = findViewById(R.id.add_task)
 
@@ -306,10 +318,6 @@ class TasksListActivity : AppCompatActivity() {
 
         setObserver()
 
-        thread {
-            categories =
-                CategoryLocalRepo(ToDoDatabase.getInstance(application).categoryDao()).getAll()
-        }
 
         //TODO: to do wyrzucenia potem
         addCategoriesAndTagsIfNotExist()
@@ -334,6 +342,14 @@ class TasksListActivity : AppCompatActivity() {
             tagdao.addTag(Tag("#społeczne"))
             tagdao.addTag(Tag("#prywatne"))
             tagdao.addTag(Tag("#wakacje"))
+        }
+    }
+
+    private fun reloadDatabaseStaticData(){
+        thread {
+            taskTagsElements = taskTagRepo.getAll()
+            tagsElements = tagRepo.getAll()
+            categoriesElements = categoryRepo.getAll()
         }
     }
 
@@ -421,11 +437,11 @@ class TasksListActivity : AppCompatActivity() {
 
             fun setTags(id: Int) {
                 thread {
-                    val taskTags = taskTagRepo.getTaskTagCrossRefForTask(id)
-                    val tags = tagRepo.getAll()
+                    if(tagsElements.isEmpty()||taskTagsElements.isEmpty())reloadDatabaseStaticData()
+                    val currTaskTags = taskTagsElements.filter { it.taskId==id }
                     var tmpString = ""
-                    taskTags.forEach {
-                        tmpString = "$tmpString " + (tags.find { tag -> tag.id == it.tagId }?.title
+                    currTaskTags.forEach {
+                        tmpString = "$tmpString " + (tagsElements.find { tag -> tag.id == it.tagId }?.title
                             ?: "Błąd!")
                     }
                     runOnUiThread {
@@ -439,7 +455,7 @@ class TasksListActivity : AppCompatActivity() {
                 if (task.categoryId == null)
                     return
                 val icon = IconIdByName(
-                    categories.find { it.id == task.categoryId }?.icon ?: "ic_delete",
+                    categoriesElements.find { it.id == task.categoryId }?.icon ?: "ic_delete",
                     application
                 )
                 title.setCompoundDrawablesWithIntrinsicBounds(icon, 0, 0, 0)
