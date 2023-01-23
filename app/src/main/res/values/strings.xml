@@ -4,6 +4,9 @@
 
     <string name="desc_hint">Zawartość</string>
     <string name="title_hint">Tytuł</string>
+    <string name="category_hint">Kategoria</string>
+    <string name="add_tags">Edytuj tagi</string>
+    <string name="avilable_tags">Dostępne tagi:</string>
     <string name="search_task">Wyszukaj</string>
     <string name="save">Zapisz</string>
     <string name="task_saved">Notatka zapisana</string>
@@ -18,4 +21,6 @@
     <string name="server_save">zapisz</string>
     <string name="cancel">anuluj</string>
     <string name="server_ip_hint">Podaj IP serwera notatnika</string>
+    <string name="tag_text_hint">Brak tagów</string>
+
 </resources>

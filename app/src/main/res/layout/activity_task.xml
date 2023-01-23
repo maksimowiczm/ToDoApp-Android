@@ -1,10 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="20dp"
+    android:layout_marginBottom="20dp"
     tools:context=".TaskActivity">
 
     <EditText
@@ -15,6 +17,14 @@
         android:inputType="textPersonName"
         android:textSize="30sp" />
 
+    <Spinner
+        android:id="@+id/task_category_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginVertical="5dp"
+        android:contentDescription="@string/category_hint"
+        android:minHeight="48dp" />
+
     <EditText
         android:id="@+id/task_desc"
         android:layout_width="match_parent"
@@ -23,5 +33,24 @@
         android:gravity="start|top"
         android:hint="@string/desc_hint"
         android:inputType="textMultiLine" />
+
+    <TextView
+        android:id="@+id/task_tags_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="10dp"
+        android:gravity="center"
+        android:textSize="20sp"
+        android:maxLines="3"
+        android:ellipsize="end"
+        android:textColor="@color/teal_700"
+        android:hint="@string/tag_text_hint" />
+
+    <Button
+        android:id="@+id/task_tags_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/teal_700"
+        android:text="@string/add_tags" />
 
 </LinearLayout>

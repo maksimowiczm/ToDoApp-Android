@@ -1,9 +1,10 @@
-package com.example.myapplication.repos
+package com.example.myapplication.data.repos
 
 import androidx.lifecycle.LiveData
+import com.example.myapplication.data.daos.TaskDao
 import com.example.myapplication.models.Task
 
-class TaskLocalRepository(private val taskDao: TaskDao) : ITaskRepository {
+class TaskLocalRepo(private val taskDao: TaskDao) : ITaskRepo {
     override fun getAll(): LiveData<List<Task>> {
         return taskDao.getAll()
     }
