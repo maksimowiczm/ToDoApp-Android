@@ -117,11 +117,11 @@ class TasksListActivity : AppCompatActivity() {
                         getString(R.string.task_saved)
                     }
 
+                reloadDatabaseStaticData()
                 // tost zapisano notatkę
                 runOnUiThread {
                     Toast.makeText(application, text, Toast.LENGTH_SHORT).show()
                 }
-                reloadDatabaseStaticData()
             }
         }
 
@@ -263,7 +263,6 @@ class TasksListActivity : AppCompatActivity() {
         cloudButton.setOnClickListener {
             rest = !rest
             setCloudButtonStyle()
-
             setRepos()
             reloadDatabaseStaticData()
             setObserver()
@@ -318,11 +317,7 @@ class TasksListActivity : AppCompatActivity() {
         }
 
         setObserver()
-
-
-        //TODO: to do wyrzucenia potem
         addCategoriesAndTagsIfNotExist()
-
     }
 
     //dla lokalnej bazy
@@ -441,7 +436,7 @@ class TasksListActivity : AppCompatActivity() {
             }
 
             fun setTags(id: Int) {
-                if (tagsElements.isEmpty() || taskTagsElements.isEmpty()) reloadDatabaseStaticData()
+//                if (tagsElements.isEmpty() || taskTagsElements.isEmpty()) reloadDatabaseStaticData()
                 val currTaskTags = taskTagsElements.filter { it.taskId == id }
                 var tmpString = ""
                 currTaskTags.forEach {
