@@ -351,6 +351,10 @@ class TasksListActivity : AppCompatActivity() {
             taskTagsElements = taskTagRepo.getAll()
             tagsElements = tagRepo.getAll()
             categoriesElements = categoryRepo.getAll()
+
+            runOnUiThread {
+                adapter!!.notifyDataSetChanged()
+            }
         }
     }
 
@@ -437,22 +441,19 @@ class TasksListActivity : AppCompatActivity() {
             }
 
             fun setTags(id: Int) {
-                thread {
-                    if (tagsElements.isEmpty() || taskTagsElements.isEmpty()) reloadDatabaseStaticData()
-                    val currTaskTags = taskTagsElements.filter { it.taskId == id }
-                    var tmpString = ""
-                    currTaskTags.forEach {
-                        tmpString =
-                            "$tmpString " + (tagsElements.find { tag -> tag.id == it.tagId }?.title
-                                ?: "Błąd!")
-                    }
-                    runOnUiThread {
-                        tagsText.text = tmpString
-                        tagsText.visibility =
-                            if (tmpString != "") TextView.VISIBLE else TextView.GONE
-                    }
+                if (tagsElements.isEmpty() || taskTagsElements.isEmpty()) reloadDatabaseStaticData()
+                val currTaskTags = taskTagsElements.filter { it.taskId == id }
+                var tmpString = ""
+                currTaskTags.forEach {
+                    tmpString =
+                        "$tmpString " + (tagsElements.find { tag -> tag.id == it.tagId }?.title
+                            ?: "Błąd!")
                 }
+                tagsText.text = tmpString
+                tagsText.visibility =
+                    if (tmpString != "") TextView.VISIBLE else TextView.GONE
             }
+
 
             fun setCategoryIcon(task: Task) {
                 if (task.categoryId == null)
