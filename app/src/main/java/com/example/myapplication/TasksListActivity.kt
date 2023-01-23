@@ -270,8 +270,8 @@ class TasksListActivity : AppCompatActivity() {
         }
     }
 
-    private fun setRepos(){
-        if(rest){
+    private fun setRepos() {
+        if (rest) {
             taskRepo = TaskRestRepo.getInstance()
             tagRepo = TagRestRepo.getInstance()
             taskTagRepo = TaskTagCrossRefRestRepo.getInstance()
@@ -279,7 +279,8 @@ class TasksListActivity : AppCompatActivity() {
         } else {
             taskRepo = TaskLocalRepo(ToDoDatabase.getInstance(application).taskDao())
             tagRepo = TagLocalRepo(ToDoDatabase.getInstance(application).tagDao())
-            taskTagRepo = TaskTagCrossRefLocalRepo(ToDoDatabase.getInstance(application).taskTagCrossRefDao())
+            taskTagRepo =
+                TaskTagCrossRefLocalRepo(ToDoDatabase.getInstance(application).taskTagCrossRefDao())
             categoryRepo = CategoryLocalRepo(ToDoDatabase.getInstance(application).categoryDao())
         }
     }
@@ -345,7 +346,7 @@ class TasksListActivity : AppCompatActivity() {
         }
     }
 
-    private fun reloadDatabaseStaticData(){
+    private fun reloadDatabaseStaticData() {
         thread {
             taskTagsElements = taskTagRepo.getAll()
             tagsElements = tagRepo.getAll()
@@ -437,16 +438,18 @@ class TasksListActivity : AppCompatActivity() {
 
             fun setTags(id: Int) {
                 thread {
-                    if(tagsElements.isEmpty()||taskTagsElements.isEmpty())reloadDatabaseStaticData()
-                    val currTaskTags = taskTagsElements.filter { it.taskId==id }
+                    if (tagsElements.isEmpty() || taskTagsElements.isEmpty()) reloadDatabaseStaticData()
+                    val currTaskTags = taskTagsElements.filter { it.taskId == id }
                     var tmpString = ""
                     currTaskTags.forEach {
-                        tmpString = "$tmpString " + (tagsElements.find { tag -> tag.id == it.tagId }?.title
-                            ?: "Błąd!")
+                        tmpString =
+                            "$tmpString " + (tagsElements.find { tag -> tag.id == it.tagId }?.title
+                                ?: "Błąd!")
                     }
                     runOnUiThread {
                         tagsText.text = tmpString
-                        tagsText.visibility = if (tmpString != "") TextView.VISIBLE else TextView.GONE
+                        tagsText.visibility =
+                            if (tmpString != "") TextView.VISIBLE else TextView.GONE
                     }
                 }
             }

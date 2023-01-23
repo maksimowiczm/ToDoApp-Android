@@ -5,7 +5,7 @@ import android.content.res.Resources
 
 class Settings {
     companion object {
-        var REST_ADDRESS = "http://192.168.2.43:3000/"
+        var REST_ADDRESS = "http://hakoski.ddns.net:8000/"
 
         fun IconIdByName(resIdName: String, context: Context): Int {
             resIdName?.let {
